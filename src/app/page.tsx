@@ -12,7 +12,7 @@ export default function Home() {
     <main className="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-12">
-          <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-accent">
+          <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-accent">
             M🌗nPlayer
           </h1>
           <p className="text-muted-foreground mt-4 text-lg">
