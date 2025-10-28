@@ -13,10 +13,10 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-12">
           <h1 className="font-headline text-5xl md:text-7xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-accent">
-            LunarEchoes
+            MoonPlayer
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">
-            Align with the cosmos. Discover your rhythm in the lunar cycle.
+            Align yourself with the world around you. Discover your rhythm.
           </p>
         </header>
 

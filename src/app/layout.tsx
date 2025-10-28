@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'LunarEchoes',
-  description: 'Track the lunar cycles and echoes of time.',
+  title: 'MoonPlayer',
+  description: 'Align yourself with the world around you. Discover your rhythm',
 };
 
 export default function RootLayout({
