@@ -136,8 +136,7 @@ export default function LunarCalculator() {
                       />
                   </div>
                   <Button onClick={handleCalculateAge} disabled={!birthDate} className="w-full sm:w-auto">
-                    <WandSparkles className="mr-2 h-4 w-4" />
-                    Calculate
+                    Go
                   </Button>
                 </div>
                 
@@ -179,8 +178,7 @@ export default function LunarCalculator() {
                         className="w-full sm:w-1/2"
                     />
                     <Button onClick={handleCalculatePeriod} disabled={!isPeriodFormValid} className="w-full sm:w-auto">
-                        <WandSparkles className="mr-2 h-4 w-4" />
-                        Calculate
+                        Go
                     </Button>
                 </div>
 
