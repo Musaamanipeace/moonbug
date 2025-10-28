@@ -124,3 +124,46 @@ export function calculateLunarCyclesBetween(startDate: Date, endDate: Date): num
   if (diffInMillis < 0) return 0;
   return diffInMillis / SYNODIC_MONTH_MS;
 }
+
+
+/**
+ * Provides a simplified, entertaining description of the moon's position.
+ * @param date The current date and time.
+ * @param phaseValue The current moon phase value (0-1).
+ * @returns A string describing the moon's visibility.
+ */
+export function getMoonPosition(date: Date, phaseValue: number): string {
+  const hour = date.getHours();
+
+  // Is it daytime? (approx. 6 AM to 6 PM)
+  const isDaytime = hour > 6 && hour < 18;
+  const isNighttime = !isDaytime;
+
+  // Approx time of next visibility
+  const nextRise = isDaytime ? "this evening" : "tomorrow morning";
+
+  // New Moon (phase ~0 or ~1) is not visible
+  if (phaseValue < 0.03 || phaseValue > 0.97) {
+    return `Not visible. Will be visible again ${nextRise}.`;
+  }
+  
+  if (isDaytime) {
+      // The moon is often visible during the day, especially around quarter phases.
+      if (phaseValue > 0.2 && phaseValue < 0.8) {
+        return "Faintly visible in the day sky.";
+      }
+      return `Not visible. Will be visible again ${nextRise}.`;
+  }
+
+  // At night, the moon is generally visible if it's not a new moon.
+  // We can add a little more flavor.
+  if (hour > 18 && hour < 22) {
+      return "Rising in the eastern sky.";
+  } else if (hour >= 22 || hour < 2) {
+      return "High in the night sky.";
+  } else if (hour >=2 && hour < 6) {
+      return "Setting in the western sky.";
+  }
+
+  return "Visible in the night sky.";
+}

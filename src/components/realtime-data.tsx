@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSeason, getMoonPhase } from '@/lib/moon-utils';
-import { Sun, Cloud, CloudRain, Snowflake, MoonStar, Clock, Zap, Leaf } from 'lucide-react';
+import { getSeason, getMoonPhase, getMoonPosition } from '@/lib/moon-utils';
+import { Sun, Cloud, CloudRain, Snowflake, MoonStar, Clock, Zap, Leaf, Eye } from 'lucide-react';
 import MoonPhaseIcon from './moon-phase-icon';
 import type { getMoonPhase as GetMoonPhaseType } from '@/lib/moon-utils';
 
@@ -32,6 +32,8 @@ export default function RealtimeData() {
   const season: string | null = now ? getSeason(now) : null;
   const time: string | null = now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : null;
   const date: string | null = now ? now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : null;
+  const moonPosition: string | null = now && moonPhase ? getMoonPosition(now, moonPhase.phaseValue) : null;
+
 
   return (
     <Card>
@@ -72,6 +74,16 @@ export default function RealtimeData() {
                 </div>
             </div>
             {moonPhase ? <MoonPhaseIcon phase={moonPhase.phaseValue} size={40} /> : <div style={{width: 40, height: 40}}/>}
+        </div>
+
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <Eye className="w-5 h-5 text-accent"/>
+                <div>
+                    <p className="font-semibold text-lg">{moonPosition || '...'}</p>
+                    <p className="text-xs text-muted-foreground">Moon Visibility</p>
+                </div>
+            </div>
         </div>
 
       </CardContent>
