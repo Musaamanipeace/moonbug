@@ -62,16 +62,20 @@ export function countFullMoons(birthDate: Date): number {
     const now = new Date();
     if (birthDate.getTime() > now.getTime()) return 0;
 
+    // Find the first full moon *before* or on the FULL_MOON_EPOCH
     let currentFullMoon = FULL_MOON_EPOCH;
-
-    // Find first full moon on or after birth date
-    while (currentFullMoon < birthDate.getTime()) {
-        currentFullMoon += SYNODIC_MONTH_MS;
+    while (currentFullMoon > birthDate.getTime()) {
+        currentFullMoon -= SYNODIC_MONTH_MS;
     }
+
+    // At this point, currentFullMoon is the last full moon *before* the birthDate.
+    // We move it to the *next* full moon, which is the first one potentially witnessed.
+    currentFullMoon += SYNODIC_MONTH_MS;
+
 
     // Now count how many full moons from that point until now
     let count = 0;
-    while(currentFullMoon < now.getTime()) {
+    while(currentFullMoon <= now.getTime()) {
         count++;
         currentFullMoon += SYNODIC_MONTH_MS;
     }
@@ -102,9 +106,21 @@ export function getSeason(date: Date): string {
   } else if (currentTime >= summerSolstice && currentTime < autumnEquinox) {
     return 'Summer';
   } else if (currentTime >= autumnEquinox && currentTime < winterSolstice) {
-    return 'Autumn';
+    return 'Winter';
   } else {
     // Covers winter, including year-end and start of new year
     return 'Winter';
   }
+}
+
+/**
+ * Calculates the number of lunar cycles between two dates.
+ * @param startDate The start date.
+ * @param endDate The end date.
+ * @returns The number of lunar cycles.
+ */
+export function calculateLunarCyclesBetween(startDate: Date, endDate: Date): number {
+  const diffInMillis = endDate.getTime() - startDate.getTime();
+  if (diffInMillis < 0) return 0;
+  return diffInMillis / SYNODIC_MONTH_MS;
 }
