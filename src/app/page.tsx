@@ -9,7 +9,7 @@ import { Newspaper } from 'lucide-react';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background text-foreground p-4 sm:p-6 md:p-8">
+    <main className="min-h-screen bg-background text-foreground py-4 sm:py-6 md:py-8 px-5 sm:px-8 md:px-10">
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-12">
           <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-accent">
