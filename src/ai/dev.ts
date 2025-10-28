@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/summarize-environmental-news.ts';
+import '@/ai/flows/summarize-news-topic.ts';
