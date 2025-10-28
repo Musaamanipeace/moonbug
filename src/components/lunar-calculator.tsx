@@ -8,11 +8,14 @@ import { Input } from "@/components/ui/input";
 import { WandSparkles } from 'lucide-react';
 import { calculateLunarAge, countFullMoons, getMoonPhase } from '@/lib/moon-utils';
 import MoonPhaseIcon from './moon-phase-icon';
-import { parse } from 'date-fns';
+import { parse, isValid, isBefore, isAfter } from 'date-fns';
 
 export default function LunarCalculator() {
+  const [year, setYear] = useState('');
+  const [month, setMonth] = useState('');
+  const [day, setDay] = useState('');
+
   const [birthDate, setBirthDate] = useState<Date | undefined>();
-  const [dateString, setDateString] = useState('');
   const [lunarData, setLunarData] = useState<{ age: number; fullMoons: number } | null>(null);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
@@ -23,18 +26,20 @@ export default function LunarCalculator() {
 
   const currentPhase = useMemo(() => currentDate ? getMoonPhase(currentDate) : null, [currentDate]);
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDateString = e.target.value;
-    setDateString(newDateString);
-
-    const parsedDate = parse(newDateString, 'yyyy-MM-dd', new Date());
-
-    if (!isNaN(parsedDate.getTime()) && parsedDate < new Date() && parsedDate > new Date("1900-01-01")) {
-      setBirthDate(parsedDate);
+  useEffect(() => {
+    const dateString = `${year}-${month}-${day}`;
+    if (year.length === 4 && month.length >= 1 && day.length >= 1) {
+      const parsedDate = parse(dateString, 'yyyy-MM-dd', new Date());
+      if (isValid(parsedDate) && isBefore(parsedDate, new Date()) && isAfter(parsedDate, new Date("1900-01-01"))) {
+        setBirthDate(parsedDate);
+      } else {
+        setBirthDate(undefined);
+      }
     } else {
       setBirthDate(undefined);
     }
-  };
+  }, [year, month, day]);
+
 
   const handleCalculate = () => {
     if (birthDate) {
@@ -52,13 +57,32 @@ export default function LunarCalculator() {
       </CardHeader>
       <CardContent className="flex-grow flex flex-col justify-between">
         <div className="flex flex-col sm:flex-row gap-4 items-center mb-6">
-          <Input
-            type="text"
-            placeholder="YYYY-MM-DD"
-            value={dateString}
-            onChange={handleDateChange}
-            className="w-full sm:w-[280px]"
-          />
+          <div className="flex gap-2 w-full sm:w-auto">
+             <Input
+                type="text"
+                placeholder="YYYY"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                className="w-24"
+                maxLength={4}
+              />
+              <Input
+                type="text"
+                placeholder="MM"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                className="w-16"
+                 maxLength={2}
+              />
+              <Input
+                type="text"
+                placeholder="DD"
+                value={day}
+                onChange={(e) => setDay(e.target.value)}
+                className="w-16"
+                 maxLength={2}
+              />
+          </div>
           <Button onClick={handleCalculate} disabled={!birthDate} className="w-full sm:w-auto">
             <WandSparkles className="mr-2 h-4 w-4" />
             Calculate
