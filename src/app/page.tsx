@@ -13,7 +13,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-12">
           <h1 className="font-headline text-4xl md:text-5xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-white to-accent">
-            M🌗nPlayer
+            MoonPlayer
           </h1>
           <p className="text-muted-foreground mt-4 text-lg">
             Align yourself with the world around you. Discover your rhythm.
