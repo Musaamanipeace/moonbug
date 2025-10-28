@@ -14,14 +14,14 @@ import MoonPhaseIcon from './moon-phase-icon';
 export default function LunarCalculator() {
   const [birthDate, setBirthDate] = useState<Date | undefined>();
   const [lunarData, setLunarData] = useState<{ age: number; fullMoons: number } | null>(null);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
   useEffect(() => {
-    // This ensures we have the current date on the client.
+    // This ensures we have the current date only on the client.
     setCurrentDate(new Date());
   }, []);
 
-  const currentPhase = useMemo(() => getMoonPhase(currentDate), [currentDate]);
+  const currentPhase = useMemo(() => currentDate ? getMoonPhase(currentDate) : null, [currentDate]);
 
   const handleCalculate = () => {
     if (birthDate) {
@@ -81,7 +81,7 @@ export default function LunarCalculator() {
           </div>
         ) : (
           <div className="flex-grow flex flex-col items-center justify-center text-center text-muted-foreground">
-             <MoonPhaseIcon phase={currentPhase.phaseValue} size={120} className="opacity-10 mb-4" />
+             {currentPhase ? <MoonPhaseIcon phase={currentPhase.phaseValue} size={120} className="opacity-10 mb-4" /> : <div style={{width: 120, height: 120}} className="opacity-10 mb-4" /> }
             <p>Your cosmic journey awaits calculation.</p>
           </div>
         )}
