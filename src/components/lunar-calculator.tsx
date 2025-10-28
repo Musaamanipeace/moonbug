@@ -1,18 +1,18 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, WandSparkles } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Input } from "@/components/ui/input";
+import { WandSparkles } from 'lucide-react';
 import { calculateLunarAge, countFullMoons, getMoonPhase } from '@/lib/moon-utils';
 import MoonPhaseIcon from './moon-phase-icon';
+import { parse } from 'date-fns';
 
 export default function LunarCalculator() {
   const [birthDate, setBirthDate] = useState<Date | undefined>();
+  const [dateString, setDateString] = useState('');
   const [lunarData, setLunarData] = useState<{ age: number; fullMoons: number } | null>(null);
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
 
@@ -22,6 +22,19 @@ export default function LunarCalculator() {
   }, []);
 
   const currentPhase = useMemo(() => currentDate ? getMoonPhase(currentDate) : null, [currentDate]);
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDateString = e.target.value;
+    setDateString(newDateString);
+
+    const parsedDate = parse(newDateString, 'yyyy-MM-dd', new Date());
+
+    if (!isNaN(parsedDate.getTime()) && parsedDate < new Date() && parsedDate > new Date("1900-01-01")) {
+      setBirthDate(parsedDate);
+    } else {
+      setBirthDate(undefined);
+    }
+  };
 
   const handleCalculate = () => {
     if (birthDate) {
@@ -39,29 +52,13 @@ export default function LunarCalculator() {
       </CardHeader>
       <CardContent className="flex-grow flex flex-col justify-between">
         <div className="flex flex-col sm:flex-row gap-4 items-center mb-6">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-full sm:w-[280px] justify-start text-left font-normal",
-                  !birthDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {birthDate ? format(birthDate, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={birthDate}
-                onSelect={setBirthDate}
-                disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Input
+            type="text"
+            placeholder="YYYY-MM-DD"
+            value={dateString}
+            onChange={handleDateChange}
+            className="w-full sm:w-[280px]"
+          />
           <Button onClick={handleCalculate} disabled={!birthDate} className="w-full sm:w-auto">
             <WandSparkles className="mr-2 h-4 w-4" />
             Calculate
