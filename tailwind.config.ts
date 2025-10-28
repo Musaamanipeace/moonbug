@@ -11,7 +11,7 @@ export default {
     extend: {
       fontFamily: {
         body: ['Literata', 'serif'],
-        headline: ['Literata', 'serif'],
+        headline: ['"Source Code Pro"', 'monospace'],
         code: ['"Source Code Pro"', 'monospace'],
       },
       colors: {
