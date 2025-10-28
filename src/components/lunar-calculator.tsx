@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { WandSparkles, CalendarRange, Info } from 'lucide-react';
-import { calculateLunarAge, countFullMoons, calculateLunarCyclesBetween } from '@/lib/moon-utils';
+import { calculateLunarAge, countFullMoons, calculateLunarCyclesBetween, getMoonPhase } from '@/lib/moon-utils';
 import MoonPhaseIcon from './moon-phase-icon';
 import { parse, isValid, isBefore, isAfter, differenceInMilliseconds } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -30,9 +30,11 @@ export default function LunarCalculator() {
 
   // Common state
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setCurrentDate(new Date());
+    setIsClient(true);
   }, []);
 
   const currentPhase = useMemo(() => currentDate ? getMoonPhase(currentDate) : null, [currentDate]);
@@ -88,7 +90,7 @@ export default function LunarCalculator() {
             <CardDescription>
                 {view === 'lunarAge' ? 'Enter your birth date to see your life in lunar cycles.' : 'Calculate lunar cycles between any two dates.'}
             </CardDescription>
-            <TooltipProvider>
+            {isClient && <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button variant="ghost" size="sm" onClick={() => setView(v => v === 'lunarAge' ? 'lunarPeriod' : 'lunarAge')}>
@@ -100,7 +102,7 @@ export default function LunarCalculator() {
                         <p>Remember, all calculations are approximate!</p>
                     </TooltipContent>
                 </Tooltip>
-            </TooltipProvider>
+            </TooltipProvider>}
         </div>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col justify-between">
