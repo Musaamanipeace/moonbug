@@ -1,3 +1,4 @@
+
 // All calculations are approximate and for entertainment purposes.
 // They do not account for leap seconds, timezones, or orbital irregularities.
 
@@ -7,6 +8,11 @@ const SYNODIC_MONTH_MS = LUNAR_CYCLE_DAYS * 24 * 60 * 60 * 1000;
 const NEW_MOON_EPOCH = new Date('2023-01-21T20:53:00Z').getTime();
 // A known full moon: Jan 6, 2023, 23:08 UTC
 const FULL_MOON_EPOCH = new Date('2023-01-06T23:08:00Z').getTime();
+
+const PHASE_LENGTH_MS = SYNODIC_MONTH_MS / 8;
+// Epoch of the first transition after the reference new moon (New Moon -> Waxing Crescent) is at 1/16th of a cycle
+const TRANSITION_EPOCH = NEW_MOON_EPOCH + (SYNODIC_MONTH_MS / 16);
+
 
 export const MOON_PHASES = [
   'New Moon',
@@ -62,25 +68,28 @@ export function countFullMoons(birthDate: Date): number {
     const now = new Date();
     if (birthDate.getTime() > now.getTime()) return 0;
 
-    // Find the first full moon *before* or on the FULL_MOON_EPOCH
-    let currentFullMoon = FULL_MOON_EPOCH;
-    while (currentFullMoon > birthDate.getTime()) {
-        currentFullMoon -= SYNODIC_MONTH_MS;
+    // Find the first full moon *after* or on the birth date.
+    let nextFullMoon = FULL_MOON_EPOCH;
+    if (birthDate.getTime() > nextFullMoon) {
+        // Move forward to the cycle containing the birth date
+        const diff = birthDate.getTime() - nextFullMoon;
+        const cycles = Math.ceil(diff / SYNODIC_MONTH_MS);
+        nextFullMoon += cycles * SYNODIC_MONTH_MS;
+    } else {
+        // Move backward to the cycle before the birth date
+         while (nextFullMoon > birthDate.getTime()) {
+            nextFullMoon -= SYNODIC_MONTH_MS;
+        }
+        // And then forward one to be the first full moon *after* the birthdate
+        nextFullMoon += SYNODIC_MONTH_MS;
     }
-
-    // At this point, currentFullMoon is the last full moon *before* the birthDate.
-    // We move it to the *next* full moon, which is the first one potentially witnessed.
-    currentFullMoon += SYNODIC_MONTH_MS;
 
 
     // Now count how many full moons from that point until now
-    let count = 0;
-    while(currentFullMoon <= now.getTime()) {
-        count++;
-        currentFullMoon += SYNODIC_MONTH_MS;
-    }
+    if (nextFullMoon > now.getTime()) return 0;
     
-    return count;
+    const moonsSinceFirst = (now.getTime() - nextFullMoon) / SYNODIC_MONTH_MS;
+    return 1 + Math.floor(moonsSinceFirst);
 }
 
 
@@ -137,14 +146,13 @@ export function getMoonPosition(date: Date, phaseValue: number): string {
 
   // Is it daytime? (approx. 6 AM to 6 PM)
   const isDaytime = hour > 6 && hour < 18;
-  const isNighttime = !isDaytime;
 
   // Approx time of next visibility
   const nextRise = isDaytime ? "this evening" : "tomorrow morning";
 
   // New Moon (phase ~0 or ~1) is not visible
   if (phaseValue < 0.03 || phaseValue > 0.97) {
-    return `Not visible. Will be visible again ${nextRise}.`;
+    return `Not visible. Rises again ${nextRise}.`;
   }
   
   if (isDaytime) {
@@ -152,7 +160,7 @@ export function getMoonPosition(date: Date, phaseValue: number): string {
       if (phaseValue > 0.2 && phaseValue < 0.8) {
         return "Faintly visible in the day sky.";
       }
-      return `Not visible. Will be visible again ${nextRise}.`;
+      return `Not visible. Rises again ${nextRise}.`;
   }
 
   // At night, the moon is generally visible if it's not a new moon.
@@ -166,4 +174,24 @@ export function getMoonPosition(date: Date, phaseValue: number): string {
   }
 
   return "Visible in the night sky.";
+}
+
+/**
+ * Calculates the time since the current lunar phase began and until it transitions.
+ * @param date The date to calculate from.
+ * @returns An object with elapsed and remaining time in hours.
+ */
+export function getPhaseTransitionTimes(date: Date): { elapsedHours: number; remainingHours: number } {
+  const timeSinceTransitionEpoch = date.getTime() - TRANSITION_EPOCH;
+  
+  const timeIntoCurrentPhaseMs = timeSinceTransitionEpoch % PHASE_LENGTH_MS;
+  // Ensure the result is positive
+  const positiveTimeIntoCurrentPhaseMs = timeIntoCurrentPhaseMs < 0 ? timeIntoCurrentPhaseMs + PHASE_LENGTH_MS : timeIntoCurrentPhaseMs;
+  
+  const timeRemainingMs = PHASE_LENGTH_MS - positiveTimeIntoCurrentPhaseMs;
+
+  const elapsedHours = positiveTimeIntoCurrentPhaseMs / (1000 * 60 * 60);
+  const remainingHours = timeRemainingMs / (1000 * 60 * 60);
+  
+  return { elapsedHours, remainingHours };
 }

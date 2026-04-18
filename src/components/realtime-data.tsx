@@ -1,11 +1,13 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSeason, getMoonPhase, getMoonPosition } from '@/lib/moon-utils';
-import { Sun, Cloud, CloudRain, Snowflake, MoonStar, Clock, Zap, Leaf, Eye } from 'lucide-react';
+import { getSeason, getMoonPhase, getMoonPosition, getPhaseTransitionTimes } from '@/lib/moon-utils';
+import { Sun, Cloud, CloudRain, Snowflake, MoonStar, Leaf, Eye, Hourglass } from 'lucide-react';
 import MoonPhaseIcon from './moon-phase-icon';
-import type { getMoonPhase as GetMoonPhaseType } from '@/lib/moon-utils';
+import type { getMoonPhase as GetMoonPhaseType, getPhaseTransitionTimes as GetPhaseTransitionTimesType } from '@/lib/moon-utils';
+import { Separator } from './ui/separator';
 
 const weatherOptions = [
   { name: 'Sunny', icon: <Sun className="text-yellow-400" />, temp: '25°C' },
@@ -16,6 +18,7 @@ const weatherOptions = [
 
 type WeatherOption = typeof weatherOptions[0];
 type MoonPhase = ReturnType<typeof GetMoonPhaseType>;
+type PhaseTransition = ReturnType<typeof GetPhaseTransitionTimesType>;
 
 export default function RealtimeData() {
   const [now, setNow] = useState<Date | null>(null);
@@ -33,6 +36,7 @@ export default function RealtimeData() {
   const time: string | null = now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : null;
   const date: string | null = now ? now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : null;
   const moonPosition: string | null = now && moonPhase ? getMoonPosition(now, moonPhase.phaseValue) : null;
+  const transitionTimes: PhaseTransition | null = now ? getPhaseTransitionTimes(now) : null;
 
 
   return (
@@ -82,6 +86,24 @@ export default function RealtimeData() {
                 <div>
                     <p className="font-semibold text-lg">{moonPosition || '...'}</p>
                     <p className="text-xs text-muted-foreground">Moon Visibility</p>
+                </div>
+            </div>
+        </div>
+        
+        <Separator />
+        
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <Hourglass className="w-5 h-5 text-accent"/>
+                <div>
+                    {transitionTimes ? (
+                        <>
+                            <p className="font-semibold text-lg">Started {transitionTimes.elapsedHours.toFixed(0)} hours ago</p>
+                            <p className="text-xs text-muted-foreground">Transitioning in {transitionTimes.remainingHours.toFixed(0)} hours</p>
+                        </>
+                    ) : (
+                        <p className="font-semibold text-lg">...</p>
+                    )}
                 </div>
             </div>
         </div>
