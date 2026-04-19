@@ -28,12 +28,29 @@
           "description": "The main text content of the sticky note."
         },
         "updatedAt": {
-            "type": "string",
-            "description": "Timestamp of the last update.",
-            "format": "date-time"
+          "type": "string",
+          "description": "Timestamp of the last update.",
+          "format": "date-time"
+        },
+        "notificationTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The scheduled ISO 8601 time for the notification."
+        },
+        "notificationVoice": {
+          "type": "string",
+          "description": "The identifier for the notification voice.",
+          "enum": [
+            "Algenib",
+            "Achernar",
+            "Enif"
+          ]
         }
       },
-      "required": ["content", "updatedAt"]
+      "required": [
+        "content",
+        "updatedAt"
+      ]
     },
     "Post": {
       "$schema": "http://json-schema.org/draft-07/schema#",
