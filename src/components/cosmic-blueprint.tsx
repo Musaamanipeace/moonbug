@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { doc } from 'firebase/firestore';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { calculateLunarAge, countFullMoons, getMoonPhase, MOON_PHASES } from '@/lib/moon-utils';
+import { countNewMoonsSince, getLunarDate, getMoonPhase, MOON_PHASES } from '@/lib/moon-utils';
 import MoonPhaseIcon from '@/components/moon-phase-icon';
 import { parse, isValid, isBefore, isAfter, format } from 'date-fns';
 import { Loader2, User, Pencil } from 'lucide-react';
@@ -32,6 +33,12 @@ export default function CosmicBlueprint() {
     const [day, setDay] = useState('');
     const [parsedBirthDate, setParsedBirthDate] = useState<Date | undefined>();
     const [isSaving, setIsSaving] = useState(false);
+    const [now, setNow] = useState<Date | null>(null);
+
+    useEffect(() => {
+        // This ensures the `new Date()` is only called on the client-side
+        setNow(new Date());
+    }, []);
 
     const birthDate = useMemo(() => {
         if (!userProfile?.birthDate) return null;
@@ -39,13 +46,16 @@ export default function CosmicBlueprint() {
     }, [userProfile]);
 
     const lunarData = useMemo(() => {
-        if (!birthDate) return null;
-        const ageInCycles = calculateLunarAge(birthDate);
-        const ageInLunarYears = ageInCycles / 12; // A lunar year has 12 lunar months (cycles)
-        const fullMoons = countFullMoons(birthDate);
+        if (!birthDate || !now) return null;
+        const ageInMoons = countNewMoonsSince(birthDate);
+        const currentLunarDate = getLunarDate(now);
         const birthMoonPhase = getMoonPhase(birthDate);
-        return { ageInLunarYears, fullMoons, birthMoonPhase };
-    }, [birthDate]);
+        return { 
+            ageInMoons, 
+            dayOfCurrentCycle: currentLunarDate?.lunarDay, 
+            birthMoonPhase 
+        };
+    }, [birthDate, now]);
 
     // Effect to set initial editing state and pre-fill inputs
     useEffect(() => {
@@ -94,7 +104,7 @@ export default function CosmicBlueprint() {
 
     const isLoading = isUserLoading || isProfileLoading;
 
-    if (isLoading) {
+    if (isLoading || !now) {
         return (
             <Card className="glass-card flex items-center justify-center min-h-[220px]">
                 <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -117,6 +127,7 @@ export default function CosmicBlueprint() {
     }
     
     if (lunarData && !isEditing) {
+        const todaysPhase = getMoonPhase(now);
         return (
             <Card className="glass-card">
                  <CardHeader>
@@ -124,17 +135,22 @@ export default function CosmicBlueprint() {
                     <CardDescription>Based on your birth date: {format(birthDate!, 'MMMM d, yyyy')}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-2 items-center text-center">
-                     <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-background/50">
-                        <span className="font-headline text-3xl font-bold text-accent">{lunarData.ageInLunarYears.toFixed(2)}</span>
-                        <span className="text-xs text-muted-foreground text-center">Lunar Years Old</span>
+                     <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-background/50 h-full">
+                        <span className="font-headline text-3xl font-bold text-accent">{lunarData.ageInMoons.toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground text-center">New Moons Lived</span>
                     </div>
-                    <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-background/50">
-                        <span className="font-headline text-3xl font-bold text-accent">{lunarData.fullMoons}</span>
-                        <span className="text-xs text-muted-foreground text-center">Full Moons Seen</span>
+                     <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-background/50 h-full relative">
+                        {lunarData.dayOfCurrentCycle && (
+                            <>
+                                <MoonPhaseIcon phase={todaysPhase.phaseValue} size={40} />
+                                <span className="absolute text-lg font-bold text-background mix-blend-difference pointer-events-none">{lunarData.dayOfCurrentCycle}</span>
+                                <span className="text-xs text-muted-foreground text-center mt-auto pt-1">Day of Current Moon</span>
+                            </>
+                        )}
                     </div>
-                    <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-background/50">
+                    <div className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg bg-background/50 h-full">
                         <MoonPhaseIcon phase={lunarData.birthMoonPhase.phaseValue} size={40} />
-                        <span className="text-xs text-muted-foreground text-center">Birth Moon Phase</span>
+                        <span className="text-xs text-muted-foreground text-center mt-auto pt-1">Birth Moon Phase</span>
                     </div>
                 </CardContent>
                 <CardFooter>

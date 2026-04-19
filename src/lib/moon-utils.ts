@@ -53,36 +53,24 @@ export function getMoonPhase(date: Date): { phaseName: string; illumination: num
 }
 
 /**
- * Calculates the number of lunar cycles since a given birth date.
- * @param birthDate The user's birth date.
- * @returns The number of lunar cycles.
- */
-export function calculateLunarAge(birthDate: Date): number {
-  const now = new Date();
-  const ageInMillis = now.getTime() - birthDate.getTime();
-  if (ageInMillis < 0) return 0;
-  return ageInMillis / SYNODIC_MONTH_MS;
-}
-
-/**
  * Calculates the number of full moons visible since a given birth date.
- * @param birthDate The user's birth date.
+ * @param startDate The user's birth date.
  * @returns The number of full moons.
  */
-export function countFullMoons(birthDate: Date): number {
+export function countFullMoonsSince(startDate: Date): number {
     const now = new Date();
-    if (birthDate.getTime() > now.getTime()) return 0;
+    if (startDate.getTime() > now.getTime()) return 0;
 
     // Find the first full moon *after* or on the birth date.
     let nextFullMoon = FULL_MOON_EPOCH;
-    if (birthDate.getTime() > nextFullMoon) {
+    if (startDate.getTime() > nextFullMoon) {
         // Move forward to the cycle containing the birth date
-        const diff = birthDate.getTime() - nextFullMoon;
+        const diff = startDate.getTime() - nextFullMoon;
         const cycles = Math.ceil(diff / SYNODIC_MONTH_MS);
         nextFullMoon += cycles * SYNODIC_MONTH_MS;
     } else {
         // Move backward to the cycle before the birth date
-         while (nextFullMoon > birthDate.getTime()) {
+         while (nextFullMoon > startDate.getTime()) {
             nextFullMoon -= SYNODIC_MONTH_MS;
         }
         // And then forward one to be the first full moon *after* the birthdate
@@ -94,6 +82,38 @@ export function countFullMoons(birthDate: Date): number {
     if (nextFullMoon > now.getTime()) return 0;
     
     const moonsSinceFirst = (now.getTime() - nextFullMoon) / SYNODIC_MONTH_MS;
+    return 1 + Math.floor(moonsSinceFirst);
+}
+
+/**
+ * Calculates the number of new moons since a given start date.
+ * @param startDate The date to start counting from.
+ * @returns The total number of new moons.
+ */
+export function countNewMoonsSince(startDate: Date): number {
+    const now = new Date();
+    if (startDate.getTime() > now.getTime()) return 0;
+
+    // Find the first new moon *after* or on the start date.
+    let nextNewMoon = NEW_MOON_EPOCH;
+    if (startDate.getTime() > nextNewMoon) {
+        // Move forward to the cycle containing the start date
+        const diff = startDate.getTime() - nextNewMoon;
+        const cycles = Math.ceil(diff / SYNODIC_MONTH_MS);
+        nextNewMoon += cycles * SYNODIC_MONTH_MS;
+    } else {
+        // Move backward to the cycle before the start date
+         while (nextNewMoon > startDate.getTime()) {
+            nextNewMoon -= SYNODIC_MONTH_MS;
+        }
+        // And then forward one to be the first new moon *after* the start date
+        nextNewMoon += SYNODIC_MONTH_MS;
+    }
+
+    // Now count how many new moons from that point until now
+    if (nextNewMoon > now.getTime()) return 0;
+    
+    const moonsSinceFirst = (now.getTime() - nextNewMoon) / SYNODIC_MONTH_MS;
     return 1 + Math.floor(moonsSinceFirst);
 }
 

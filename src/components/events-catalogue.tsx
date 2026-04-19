@@ -12,30 +12,35 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { findEvents, type FindEventsOutput } from '@/ai/flows/find-events-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getLunarDate } from '@/lib/moon-utils';
-
-const searchTopics = ['Nature', 'Climate', 'Stargazing', 'Sustainable Living'];
+import { getLunarDate, countNewMoonsSince } from '@/lib/moon-utils';
 
 function TodayInLunar() {
-    const [lunarDateString, setLunarDateString] = useState<string | null>(null);
+    const [lunarInfo, setLunarInfo] = useState<{ totalMoons: number; dayOfCycle: number } | null>(null);
 
     useEffect(() => {
+        // This effect runs only on the client-side
         const today = new Date();
+        const adEpoch = new Date('0001-01-01T00:00:00Z');
+        const totalMoons = countNewMoonsSince(adEpoch);
         const lunarDate = getLunarDate(today);
+
         if (lunarDate) {
-            setLunarDateString(`Day ${lunarDate.lunarDay} of the ${lunarDate.monthName}, Lunar Year ${lunarDate.lunarYear}`);
+            setLunarInfo({ totalMoons, dayOfCycle: lunarDate.lunarDay });
         }
     }, []);
 
-    if (!lunarDateString) {
+    if (!lunarInfo) {
         return <div className="h-5 w-full max-w-sm animate-pulse rounded-md bg-muted" />;
     }
 
     return (
-        <p className="text-sm font-medium text-muted-foreground">{lunarDateString}</p>
+        <p className="text-sm font-medium text-muted-foreground">
+            {`~${lunarInfo.totalMoons.toLocaleString()}th New Moon, Day ${lunarInfo.dayOfCycle}`}
+        </p>
     );
 }
 
+const searchTopics = ['Nature', 'Stargazing', 'Climate', 'Food', 'Technology'];
 
 export default function EventsCatalogue() {
   const [discoveredEvents, setDiscoveredEvents] = useState<FindEventsOutput['events']>([]);
