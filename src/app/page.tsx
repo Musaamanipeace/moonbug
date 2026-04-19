@@ -3,6 +3,7 @@ import CosmicBlueprint from '@/components/cosmic-blueprint';
 import EventsCatalogue from '@/components/events-catalogue';
 import StickyNote from '@/components/sticky-note';
 import MainLayout from '@/components/main-layout';
+import AtmosphericMusicPlayer from '@/components/atmospheric-music-player';
 
 export default function Home() {
   return (
@@ -24,6 +25,7 @@ export default function Home() {
             <div className="grid gap-6">
               <CosmicBlueprint />
               <StickyNote />
+              <AtmosphericMusicPlayer />
             </div>
           </div>
 
