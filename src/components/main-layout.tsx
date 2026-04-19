@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -24,7 +25,6 @@ import {
   User,
   PanelLeft,
   LogIn,
-  LogOut,
   Loader2,
 } from 'lucide-react';
 import { useUser } from '@/firebase';
@@ -40,7 +40,7 @@ const navItems = [
   { href: '/posts', label: 'Posts', icon: BookOpen },
 ];
 
-function AuthStatus() {
+function AuthStatus({ navigatingTo, onNavigate }: { navigatingTo: string | null, onNavigate: (href: string) => void}) {
   const { user, isUserLoading } = useUser();
   const pathname = usePathname();
 
@@ -56,12 +56,14 @@ function AuthStatus() {
       </SidebarMenuItem>
     );
   }
+  
+  const isNavigating = navigatingTo === '/profile';
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={pathname === '/profile'}>
-        <Link href="/profile">
-          {user ? <User /> : <LogIn />}
+        <Link href="/profile" onClick={() => onNavigate('/profile')}>
+          {isNavigating ? <Loader2 className="animate-spin" /> : (user ? <User /> : <LogIn />)}
           <span>{user ? (user.isAnonymous ? 'Guest' : user.email?.split('@')[0]) : 'Profile'}</span>
         </Link>
       </SidebarMenuButton>
@@ -73,6 +75,19 @@ function AuthStatus() {
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { isMobile } = useSidebar();
   const pathname = usePathname();
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+
+  useEffect(() => {
+    // On a new page navigation, reset the loading state.
+    setNavigatingTo(null);
+  }, [pathname]);
+
+  const handleNavigate = (href: string) => {
+    // Only set loading state if navigating to a different page.
+    if (pathname !== href) {
+      setNavigatingTo(href);
+    }
+  };
   
   return (
     <div className="flex min-h-screen">
@@ -90,14 +105,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             {navItems.map((item) => (
                <SidebarMenuItem key={item.label}>
                 <SidebarMenuButton asChild isActive={pathname === item.href}>
-                  <Link href={item.href}>
-                    <item.icon />
-                    {item.label}
+                  <Link href={item.href} onClick={() => handleNavigate(item.href)}>
+                    {navigatingTo === item.href ? <Loader2 className="animate-spin" /> : <item.icon />}
+                    <span>{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
-             <AuthStatus />
+             <AuthStatus navigatingTo={navigatingTo} onNavigate={handleNavigate} />
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
