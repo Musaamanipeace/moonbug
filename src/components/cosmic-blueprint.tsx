@@ -4,12 +4,12 @@ import { useState, useMemo, useEffect } from 'react';
 import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { calculateLunarAge, countFullMoons, getMoonPhase, MOON_PHASES } from '@/lib/moon-utils';
 import MoonPhaseIcon from '@/components/moon-phase-icon';
 import { parse, isValid, isBefore, isAfter, format } from 'date-fns';
-import { Loader2, User } from 'lucide-react';
+import { Loader2, User, Pencil } from 'lucide-react';
 
 interface UserProfile {
     birthDate?: string;
@@ -26,6 +26,7 @@ export default function CosmicBlueprint() {
 
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
+    const [isEditing, setIsEditing] = useState(false);
     const [year, setYear] = useState('');
     const [month, setMonth] = useState('');
     const [day, setDay] = useState('');
@@ -44,6 +45,22 @@ export default function CosmicBlueprint() {
         const birthMoonPhase = getMoonPhase(birthDate);
         return { age, fullMoons, birthMoonPhase };
     }, [birthDate]);
+
+    // Effect to set initial editing state and pre-fill inputs
+    useEffect(() => {
+        if (!isProfileLoading && !userProfile?.birthDate) {
+            setIsEditing(true);
+        }
+        if (userProfile?.birthDate) {
+            const d = parse(userProfile.birthDate, 'yyyy-MM-dd', new Date());
+            if (isValid(d)) {
+                setYear(format(d, 'yyyy'));
+                setMonth(format(d, 'MM'));
+                setDay(format(d, 'dd'));
+            }
+        }
+    }, [isProfileLoading, userProfile]);
+
 
     // Effect for date input parsing
     useEffect(() => {
@@ -69,6 +86,7 @@ export default function CosmicBlueprint() {
         // Use a non-blocking write to Firestore
         setDocumentNonBlocking(userProfileRef, { birthDate: dateToSave }, { merge: true });
 
+        setIsEditing(false);
         // Optimistically update, but Firestore listener will handle the real state
         setTimeout(() => setIsSaving(false), 1000);
     };
@@ -97,7 +115,7 @@ export default function CosmicBlueprint() {
         )
     }
     
-    if (lunarData) {
+    if (lunarData && !isEditing) {
         return (
             <Card className="glass-card">
                  <CardHeader>
@@ -118,6 +136,12 @@ export default function CosmicBlueprint() {
                         <span className="font-headline text-md font-bold text-accent">{lunarData.birthMoonPhase.phaseName}</span>
                     </div>
                 </CardContent>
+                <CardFooter>
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                        <Pencil className="mr-2 h-3 w-3" />
+                        Change Date
+                    </Button>
+                </CardFooter>
             </Card>
         )
     }
@@ -126,23 +150,32 @@ export default function CosmicBlueprint() {
         <Card className="glass-card">
              <CardHeader>
                 <CardTitle>Discover Your Lunar Journey</CardTitle>
-                <CardDescription>Enter your birth date to see your life in lunar cycles.</CardDescription>
+                <CardDescription>
+                    {lunarData ? "Update your birth date." : "Enter your birth date to see your life in lunar cycles."}
+                </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-col sm:flex-row gap-4 items-center">
-                    <div className="flex gap-2 w-full sm:w-auto">
+                 <div className="space-y-4">
+                    <div className="flex gap-2 w-full">
                         <Input type="text" placeholder="YYYY" value={year} onChange={(e) => setYear(e.target.value)} className="w-24" maxLength={4} disabled={isSaving}/>
                         <Input type="text" placeholder="MM" value={month} onChange={(e) => setMonth(e.target.value)} className="w-16" maxLength={2} disabled={isSaving}/>
                         <Input type="text" placeholder="DD" value={day} onChange={(e) => setDay(e.target.value)} className="w-16" maxLength={2} disabled={isSaving}/>
                     </div>
-                    <Button onClick={handleSaveBirthDate} disabled={!parsedBirthDate || isSaving} className="w-full sm:w-auto">
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Go
-                    </Button>
+                     {!parsedBirthDate && (year.length > 0 || month.length > 0 || day.length > 0) && (
+                        <p className="text-destructive text-sm">Please enter a valid past date.</p>
+                    )}
+                    <div className="flex gap-2">
+                        <Button onClick={handleSaveBirthDate} disabled={!parsedBirthDate || isSaving} className="w-full sm:w-auto">
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Save
+                        </Button>
+                        {lunarData && (
+                            <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving}>
+                                Cancel
+                            </Button>
+                        )}
+                    </div>
                 </div>
-                {!parsedBirthDate && (year.length > 0 || month.length > 0 || day.length > 0) && (
-                    <p className="text-destructive text-sm mt-2">Please enter a valid past date.</p>
-                )}
             </CardContent>
         </Card>
     );
