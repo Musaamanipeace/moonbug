@@ -37,11 +37,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, serverTimestamp, Timestamp, where } from 'firebase/firestore';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 const topics = [
+  'All Topics',
   'Astrophotography',
   'Gardening Tips',
   'Sustainable Living',
@@ -72,6 +73,7 @@ type Post = {
 
 export default function PostsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTopic, setActiveTopic] = useState('All Topics');
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -93,8 +95,12 @@ export default function PostsPage() {
 
   const postsQuery = useMemoFirebase(() => {
     if (!postsCollectionRef) return null;
-    return query(postsCollectionRef, orderBy('createdAt', 'desc'));
-  }, [postsCollectionRef]);
+    if (activeTopic === 'All Topics') {
+        return query(postsCollectionRef, orderBy('createdAt', 'desc'));
+    }
+    return query(postsCollectionRef, where('topic', '==', activeTopic), orderBy('createdAt', 'desc'));
+  }, [postsCollectionRef, activeTopic]);
+
 
   const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsQuery);
 
@@ -242,7 +248,7 @@ export default function PostsPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {topics.map(topic => (
+                                {topics.filter(t => t !== 'All Topics').map(topic => (
                                   <SelectItem key={topic} value={topic}>{topic}</SelectItem>
                                 ))}
                               </SelectContent>
@@ -274,7 +280,13 @@ export default function PostsPage() {
                         <ul className="space-y-2">
                            {topics.map(topic => (
                                <li key={topic}>
-                                   <Button variant="ghost" className="w-full justify-start">{topic}</Button>
+                                   <Button 
+                                    variant={activeTopic === topic ? 'secondary' : 'ghost'} 
+                                    className="w-full justify-start"
+                                    onClick={() => setActiveTopic(topic)}
+                                   >
+                                    {topic}
+                                   </Button>
                                </li>
                            ))}
                         </ul>
@@ -291,8 +303,8 @@ export default function PostsPage() {
                 ) : (
                     <Card className="glass-card">
                         <CardContent className="p-6 text-center text-muted-foreground">
-                            <p>No posts have been shared yet.</p>
-                            {user && <p className="mt-2 text-sm">Why not be the first?</p>}
+                            <p>No posts found for "{activeTopic}".</p>
+                            {user && <p className="mt-2 text-sm">Why not share the first one?</p>}
                         </CardContent>
                     </Card>
                 )}
