@@ -40,10 +40,11 @@ export default function CosmicBlueprint() {
 
     const lunarData = useMemo(() => {
         if (!birthDate) return null;
-        const age = calculateLunarAge(birthDate);
+        const ageInCycles = calculateLunarAge(birthDate);
+        const ageInLunarYears = ageInCycles / 12; // A lunar year has 12 lunar months (cycles)
         const fullMoons = countFullMoons(birthDate);
         const birthMoonPhase = getMoonPhase(birthDate);
-        return { age, fullMoons, birthMoonPhase };
+        return { ageInLunarYears, fullMoons, birthMoonPhase };
     }, [birthDate]);
 
     // Effect to set initial editing state and pre-fill inputs
@@ -124,8 +125,8 @@ export default function CosmicBlueprint() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-2 items-center text-center">
                      <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-background/50">
-                        <span className="font-headline text-3xl font-bold text-accent">{lunarData.age.toFixed(2)}</span>
-                        <span className="text-xs text-muted-foreground text-center">Lunar Cycles Old</span>
+                        <span className="font-headline text-3xl font-bold text-accent">{lunarData.ageInLunarYears.toFixed(2)}</span>
+                        <span className="text-xs text-muted-foreground text-center">Lunar Years Old</span>
                     </div>
                     <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-background/50">
                         <span className="font-headline text-3xl font-bold text-accent">{lunarData.fullMoons}</span>
