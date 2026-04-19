@@ -34,6 +34,57 @@
         }
       },
       "required": ["content", "updatedAt"]
+    },
+    "Post": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Post",
+      "type": "object",
+      "description": "A link or article shared by a user.",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title of the post."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL of the shared link."
+        },
+        "summary": {
+          "type": "string",
+          "description": "A user-provided summary of the content."
+        },
+        "topic": {
+          "type": "string",
+          "description": "The category or topic of the post."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "The UID of the user who created the post."
+        },
+        "authorName": {
+          "type": "string",
+          "description": "The display name of the user who created the post."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the post was created."
+        },
+        "commentCount": {
+          "type": "number",
+          "description": "The number of comments on the post."
+        }
+      },
+      "required": [
+        "title",
+        "url",
+        "topic",
+        "authorId",
+        "authorName",
+        "createdAt",
+        "commentCount"
+      ]
     }
   },
   "auth": {
@@ -54,6 +105,12 @@
         "$ref": "#/entities/StickyNote"
       },
       "description": "A subcollection for a user's notes. For now, we only use a single document with the ID 'main'."
+    },
+    "/posts/{postId}": {
+      "schema": {
+        "$ref": "#/entities/Post"
+      },
+      "description": "A collection of all posts shared by the community. The document ID is auto-generated."
     }
   }
 }
