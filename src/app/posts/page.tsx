@@ -5,8 +5,9 @@ import MainLayout from '@/components/main-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Link, MessageSquare, PlusCircle, Loader2 } from 'lucide-react';
+import { Link as LinkIcon, MessageSquare, PlusCircle, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
@@ -139,19 +140,21 @@ export default function PostsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3">
             <div className="sm:col-span-2 p-6 flex flex-col">
                 <Badge variant="outline" className="w-fit mb-2">{post.topic}</Badge>
-                <CardTitle className="text-xl mb-2">{post.title}</CardTitle>
+                <CardTitle className="text-xl mb-2">
+                    <Link href={`/posts/${post.id}`} className="hover:underline">{post.title}</Link>
+                </CardTitle>
                 {post.summary && <CardDescription className="flex-grow">{post.summary}</CardDescription>}
                 <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
                     <span>by {post.authorName} &middot; {post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</span>
                     <div className="flex items-center gap-4">
                         <a href={post.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-accent transition-colors">
-                            <Link className="h-4 w-4"/>
+                            <LinkIcon className="h-4 w-4"/>
                             Source
                         </a>
-                         <div className="flex items-center gap-1">
+                         <Link href={`/posts/${post.id}#comments`} className="flex items-center gap-1 hover:text-accent transition-colors">
                             <MessageSquare className="h-4 w-4"/>
                             {post.commentCount}
-                        </div>
+                        </Link>
                     </div>
                 </div>
             </div>
