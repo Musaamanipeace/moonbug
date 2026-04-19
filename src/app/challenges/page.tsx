@@ -2,13 +2,17 @@
 
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/main-layout';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui![CDATA['use client';
+
+import { useState, useMemo } from 'react';
+import MainLayout from '@/components/main-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Flame, Users, PlusCircle, Loader2 } from 'lucide-react';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, query, orderBy, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { collection, query, orderBy, serverTimestamp, Timestamp, doc, increment } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -117,6 +121,25 @@ export default function ChallengesPage() {
     setIsDialogOpen(false);
   }
 
+  const handleJoinChallenge = (challengeId: string, challengeTitle: string) => {
+    if (!user || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Error',
+        description: 'You must be signed in to join a challenge.',
+      });
+      return;
+    }
+    const challengeRef = doc(firestore, 'challenges', challengeId);
+    updateDocumentNonBlocking(challengeRef, {
+      participants: increment(1),
+    });
+    toast({
+        title: "Challenge Joined!",
+        description: `You are now participating in "${challengeTitle}".`,
+    });
+  };
+
   const isLoading = isUserLoading || isLoadingChallenges;
 
   return (
@@ -223,7 +246,7 @@ export default function ChallengesPage() {
                         </div>
                       </CardContent>
                       <CardFooter>
-                        <Button className="w-full">View Challenge</Button>
+                        <Button className="w-full" onClick={() => handleJoinChallenge(challenge.id, challenge.title)}>Join Challenge</Button>
                       </CardFooter>
                     </Card>
                   ))}
@@ -255,7 +278,7 @@ export default function ChallengesPage() {
                       </CardContent>
                       <CardFooter className="flex-col items-start gap-2">
                         {challenge.creatorName && <p className="text-xs text-muted-foreground">Created by: {challenge.creatorName}</p>}
-                        <Button variant="outline" className="w-full">Join Challenge</Button>
+                        <Button variant="outline" className="w-full" onClick={() => handleJoinChallenge(challenge.id, challenge.title)}>Join Challenge</Button>
                       </CardFooter>
                     </Card>
                   ))}
