@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { getLunarYearDetails, getMoonPhase, MOON_PHASES } from '@/lib/moon-utils';
+import { getLunarYearDetails, getMoonPhase } from '@/lib/moon-utils';
 import { defaultEvents, type CalendarEvent } from '@/lib/events';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Circle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isSameDay, parseISO } from 'date-fns';
 import MoonPhaseIcon from './moon-phase-icon';
@@ -18,6 +18,10 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp, doc, Timestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+
 
 const filterCategories = [
     { id: 'holiday', name: 'Holidays', color: 'ring-green-500', text: 'text-green-500', bg: 'bg-green-500' },
@@ -33,11 +37,31 @@ const phaseLegend = [
     { name: 'Full', phaseValue: 0.5 },
 ]
 
+type UserEvent = {
+  id: string;
+  date: string;
+  createdAt: Timestamp;
+}
+
 export default function LunarCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [userEvents, setUserEvents] = useState<Date[]>([]);
   const [activeFilters, setActiveFilters] = useState<string[]>(['holiday', 'cosmic', 'user']);
   const [api, setApi] = useState<CarouselApi>()
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const eventsCollectionRef = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return collection(firestore, 'users', user.uid, 'events');
+  }, [user, firestore]);
+
+  const { data: userEventsFromDb, isLoading: isLoadingEvents } = useCollection<UserEvent>(eventsCollectionRef);
+
+  const userEvents = useMemo(() => {
+    if (!userEventsFromDb) return [];
+    return userEventsFromDb.map(event => parseISO(event.date));
+  }, [userEventsFromDb]);
 
   const yearDetails = getLunarYearDetails(currentDate);
   const today = useMemo(() => new Date(), []);
@@ -73,15 +97,29 @@ export default function LunarCalendar() {
   }, []);
   
   const handleDayClick = useCallback((date: Date) => {
-     setUserEvents(prev => {
-        const dateIndex = prev.findIndex(d => isSameDay(d, date));
-        if (dateIndex > -1) {
-            return [...prev.slice(0, dateIndex), ...prev.slice(dateIndex + 1)];
-        } else {
-            return [...prev, date];
-        }
-     });
-  }, []);
+    if (!user || !eventsCollectionRef || !userEventsFromDb) {
+        toast({
+            variant: 'destructive',
+            title: 'Not signed in',
+            description: 'Please sign in to save your custom events.',
+        });
+        return;
+     }
+    
+    const dateString = format(date, 'yyyy-MM-dd');
+    const existingEvent = userEventsFromDb.find(event => event.date === dateString);
+
+    if (existingEvent) {
+        const eventDocRef = doc(eventsCollectionRef, existingEvent.id);
+        deleteDocumentNonBlocking(eventDocRef);
+    } else {
+        const newEvent = {
+            date: dateString,
+            createdAt: serverTimestamp(),
+        };
+        addDocumentNonBlocking(eventsCollectionRef, newEvent);
+    }
+  }, [user, eventsCollectionRef, userEventsFromDb, toast]);
   
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -128,7 +166,11 @@ export default function LunarCalendar() {
         <CardContent className="p-2">
             <Carousel setApi={setApi} opts={{ align: "start" }} className="w-full">
                 <CarouselContent>
-                    {yearDetails.months.map(month => {
+                    {(isUserLoading || isLoadingEvents) && !userEvents ? (
+                        <div className="flex items-center justify-center w-full h-64 col-span-full">
+                            <Loader2 className="animate-spin text-accent h-8 w-8" />
+                        </div>
+                    ) : yearDetails.months.map(month => {
                     const days = [];
                     const monthLength = Math.round((month.endDate.getTime() - month.startDate.getTime()) / (1000 * 60 * 60 * 24));
                     const isCurrentMonth = today >= month.startDate && today < month.endDate;
