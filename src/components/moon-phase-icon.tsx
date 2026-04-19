@@ -23,7 +23,7 @@ const MoonPhaseIcon: FC<MoonPhaseIconProps> = ({ phase, size = 100, className })
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={className} aria-hidden="true">
        {/* Always draw the dark circle underneath */}
       <circle cx={x} cy={y} r={R} fill="hsl(var(--muted) / 0.5)" />
-      <path d={path} fill="hsl(var(--accent))" />
+      <path d={path} fill="hsl(var(--foreground))" />
     </svg>
   );
 };
