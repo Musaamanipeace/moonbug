@@ -23,8 +23,12 @@ import {
   BookOpen,
   User,
   PanelLeft,
+  LogIn,
+  LogOut,
+  Loader2,
 } from 'lucide-react';
-import { Button } from './ui/button';
+import { useUser } from '@/firebase';
+
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -34,8 +38,36 @@ const navItems = [
   { href: '/snaps', label: 'Snaps', icon: Camera },
   { href: '/challenges', label: 'Challenges', icon: Swords },
   { href: '/posts', label: 'Posts', icon: BookOpen },
-  { href: '/profile', label: 'Profile', icon: User },
 ];
+
+function AuthStatus() {
+  const { user, isUserLoading } = useUser();
+  const pathname = usePathname();
+
+  if (isUserLoading) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild isActive={pathname === '/profile'}>
+          <Link href="/profile">
+            <Loader2 className="animate-spin" />
+            <span>Authenticating...</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton asChild isActive={pathname === '/profile'}>
+        <Link href="/profile">
+          {user ? <User /> : <LogIn />}
+          <span>{user ? (user.isAnonymous ? 'Guest' : user.email?.split('@')[0]) : 'Profile'}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -65,6 +97,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
+             <AuthStatus />
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
