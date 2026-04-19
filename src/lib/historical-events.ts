@@ -3,7 +3,7 @@ export type HistoricalEvent = {
   gregorianDate: string; // YYYY-MM-DD
   title: string;
   description: string;
-  category: 'Humanity' | 'Science' | 'Conflict' | 'Exploration';
+  category: 'Humanity' | 'Science' | 'Conflict' | 'Exploration' | 'Extinction';
 };
 
 export const historicalEvents: HistoricalEvent[] = [
@@ -48,5 +48,11 @@ export const historicalEvents: HistoricalEvent[] = [
         title: 'U.S. Declaration of Independence',
         description: 'The Second Continental Congress formally declares independence from Great Britain.',
         category: 'Humanity'
+    },
+    {
+        gregorianDate: '0066-00-00',
+        title: 'Chicxulub Impactor',
+        description: 'An asteroid impact event that led to a mass extinction, including non-avian dinosaurs.',
+        category: 'Extinction'
     }
 ];
