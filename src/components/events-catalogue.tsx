@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { defaultEvents } from '@/lib/events';
 import { format, parseISO } from 'date-fns';
@@ -12,33 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { findEvents, type FindEventsOutput } from '@/ai/flows/find-events-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getLunarDate, countNewMoonsSince } from '@/lib/moon-utils';
-
-function TodayInLunar() {
-    const [lunarInfo, setLunarInfo] = useState<{ totalMoons: number; dayOfCycle: number } | null>(null);
-
-    useEffect(() => {
-        // This effect runs only on the client-side
-        const today = new Date();
-        const adEpoch = new Date('0001-01-01T00:00:00Z');
-        const totalMoons = countNewMoonsSince(adEpoch);
-        const lunarDate = getLunarDate(today);
-
-        if (lunarDate) {
-            setLunarInfo({ totalMoons, dayOfCycle: lunarDate.lunarDay });
-        }
-    }, []);
-
-    if (!lunarInfo) {
-        return <div className="h-5 w-full max-w-sm animate-pulse rounded-md bg-muted" />;
-    }
-
-    return (
-        <p className="text-sm font-medium text-muted-foreground">
-            {`~${lunarInfo.totalMoons.toLocaleString()}th New Moon, Day ${lunarInfo.dayOfCycle}`}
-        </p>
-    );
-}
+import TodayLunarDate from './today-lunar-date';
 
 const searchTopics = ['Nature', 'Stargazing', 'Climate', 'Food', 'Technology'];
 
@@ -91,7 +64,7 @@ export default function EventsCatalogue() {
       </CardHeader>
        <div className="px-6 pb-4 border-b">
          <h4 className="text-xs uppercase font-bold text-muted-foreground mb-1">Today's Lunar Date</h4>
-         <TodayInLunar />
+         <TodayLunarDate />
       </div>
       <CardContent className="flex-grow p-0">
         <ScrollArea className="h-[400px] md:h-full">

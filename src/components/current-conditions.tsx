@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -8,6 +7,7 @@ import { Sun, Cloud, CloudRain, Snowflake, MoonStar, Leaf, Eye, Hourglass } from
 import MoonPhaseIcon from './moon-phase-icon';
 import type { getMoonPhase as GetMoonPhaseType, getPhaseTransitionTimes as GetPhaseTransitionTimesType } from '@/lib/moon-utils';
 import { Separator } from './ui/separator';
+import TodayLunarDate from './today-lunar-date';
 
 const weatherOptions = [
   { name: 'Sunny', icon: <Sun className="text-yellow-400" />, temp: '25°C' },
@@ -35,7 +35,6 @@ export default function CurrentConditions() {
   const moonPhase: MoonPhase | null = now ? getMoonPhase(now) : null;
   const season: string | null = now ? getSeason(now) : null;
   const time: string | null = now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : null;
-  const date: string | null = now ? now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : null;
   const moonPosition: string | null = now && moonPhase ? getMoonPosition(now, moonPhase.phaseValue) : null;
   const transitionTimes: PhaseTransition | null = now ? getPhaseTransitionTimes(now) : null;
 
@@ -48,7 +47,7 @@ export default function CurrentConditions() {
       <CardContent className="space-y-4">
         <div className='text-center border-b pb-4 min-h-[76px]'>
             {time && <p className="font-mono font-bold text-4xl text-accent">{time}</p>}
-            {date && <p className="text-sm text-muted-foreground">{date}</p>}
+            <TodayLunarDate />
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
