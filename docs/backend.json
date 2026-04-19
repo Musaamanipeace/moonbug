@@ -125,6 +125,11 @@
         "likes": {
           "type": "number",
           "description": "The number of likes the snap has received."
+        },
+        "likedBy": {
+            "type": "array",
+            "description": "An array of user UIDs who have liked the snap.",
+            "items": { "type": "string" }
         }
       },
       "required": [

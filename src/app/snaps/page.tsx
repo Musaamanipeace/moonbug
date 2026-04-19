@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import MainLayout from '@/components/main-layout';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ThumbsUp, Upload, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { collection, query, where, orderBy, doc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, doc, serverTimestamp, Timestamp, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
 import {
   Dialog,
   DialogContent,
@@ -68,11 +68,52 @@ type Snap = {
   authorName: string;
   createdAt: Timestamp;
   likes: number;
+  likedBy?: string[];
 };
 
 function SnapCard({ snap }: { snap: Snap }) {
     const firestore = useFirestore();
-    const [voted, setVoted] = useState(false);
+    const { user } = useUser();
+    const { toast } = useToast();
+
+    // Check if the current user has liked this snap
+    const isLikedByCurrentUser = useMemo(() => {
+        if (!user || !snap.likedBy) return false;
+        return snap.likedBy.includes(user.uid);
+    }, [user, snap.likedBy]);
+
+    const [optimisticLiked, setOptimisticLiked] = useState(isLikedByCurrentUser);
+    
+    // Sync with remote state when it changes
+    useEffect(() => {
+        setOptimisticLiked(isLikedByCurrentUser);
+    }, [isLikedByCurrentUser]);
+
+    const handleVote = () => {
+        if (!firestore) return;
+        if (!user) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Required',
+                description: 'You must be signed in to like a snap.',
+            });
+            return;
+        }
+
+        const snapRef = doc(firestore, 'snaps', snap.id);
+
+        const newLikesCount = optimisticLiked ? increment(-1) : increment(1);
+        const userInLikedBy = optimisticLiked ? arrayRemove(user.uid) : arrayUnion(user.uid);
+
+        // Optimistically update the UI
+        setOptimisticLiked(!optimisticLiked);
+        
+        // Update the database in the background
+        updateDocumentNonBlocking(snapRef, {
+            likes: newLikesCount,
+            likedBy: userInLikedBy,
+        });
+    };
     
     // Extract dimensions from URL for better aspect ratio - this is a fallback
     let width = 600, height = 800;
@@ -88,13 +129,8 @@ function SnapCard({ snap }: { snap: Snap }) {
         // Use default dimensions
     }
 
-    const handleVote = () => {
-        if (!firestore) return;
-        const snapRef = doc(firestore, 'snaps', snap.id);
-        const newLikes = voted ? snap.likes - 1 : snap.likes + 1;
-        updateDocumentNonBlocking(snapRef, { likes: newLikes });
-        setVoted(!voted);
-    };
+    // Optimistically calculate the like count for the UI
+    const optimisticLikes = snap.likes + (optimisticLiked ? 1 : 0) - (isLikedByCurrentUser ? 1 : 0);
 
     return (
         <Card className="glass-card overflow-hidden flex flex-col">
@@ -110,9 +146,9 @@ function SnapCard({ snap }: { snap: Snap }) {
             </CardContent>
             <CardFooter className="flex justify-between items-center p-3 mt-auto">
                 <p className="text-xs text-muted-foreground truncate flex-1 mr-2">{snap.description}</p>
-                <Button variant={voted ? "secondary" : "outline"} size="sm" onClick={handleVote} className="shrink-0">
+                <Button variant={optimisticLiked ? "secondary" : "outline"} size="sm" onClick={handleVote} className="shrink-0">
                     <ThumbsUp className="h-4 w-4 mr-2" />
-                    {snap.likes}
+                    {optimisticLikes}
                 </Button>
             </CardFooter>
         </Card>
@@ -158,6 +194,7 @@ export default function SnapsPage() {
       authorName: user.displayName || user.email?.split('@')[0] || 'Anonymous',
       createdAt: serverTimestamp(),
       likes: 0,
+      likedBy: [],
     };
 
     addDocumentNonBlocking(snapsCollectionRef, newSnap);
