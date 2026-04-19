@@ -1,5 +1,5 @@
 
-import CurrentConditions from '@/components/current-conditions';
+import CosmicBlueprint from '@/components/cosmic-blueprint';
 import EventsCatalogue from '@/components/events-catalogue';
 import StickyNote from '@/components/sticky-note';
 import MainLayout from '@/components/main-layout';
@@ -22,7 +22,7 @@ export default function Home() {
 
           <div className="lg:col-span-1">
             <div className="grid gap-6">
-              <CurrentConditions />
+              <CosmicBlueprint />
               <StickyNote />
             </div>
           </div>
