@@ -2,10 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import MainLayout from '@/components/main-layout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui![CDATA['use client';
-
-import { useState, useMemo } from 'react';
-import MainLayout from '@/components/main-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
