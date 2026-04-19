@@ -1,84 +1,65 @@
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Search, Sparkles, Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { summarizeEvent } from '@/ai/flows/event-flow';
+import { defaultEvents } from '@/lib/events';
+import { format, parseISO } from 'date-fns';
+import { Sparkles, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function EventsCatalogue() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
-
-  const handleSearch = async () => {
-    if (!searchQuery) return;
-
-    setIsLoading(true);
-    setError(null);
-    setSummary(null);
-
-    try {
-      const result = await summarizeEvent({ eventTopic: searchQuery });
-      setSummary(result.summary);
-    } catch (e: any) {
-      console.error('AI Error:', e);
-      setError(e.message || 'An error occurred while fetching the summary.');
-    } finally {
-      setIsLoading(false);
+  // Group events by month
+  const eventsByMonth = defaultEvents.reduce((acc, event) => {
+    const month = format(parseISO(event.date), 'MMMM yyyy');
+    if (!acc[month]) {
+      acc[month] = [];
     }
-  };
+    acc[month].push(event);
+    return acc;
+  }, {} as Record<string, typeof defaultEvents>);
 
   return (
-     <Card className="glass-card h-full flex flex-col">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-              <Sparkles className="text-accent" />
-              Events Catalogue
-          </CardTitle>
-          <CardDescription>Discover celestial, weather, and community events.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex-grow flex flex-col">
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
-                <div className="relative flex-grow">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder="Search events by location or keyword..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        disabled={isLoading}
-                        className="pl-10 w-full"
-                    />
-                </div>
-                <Button onClick={handleSearch} disabled={!searchQuery || isLoading}>
-                    {isLoading && <Loader2 className="animate-spin" />}
-                    {isLoading ? 'Searching...' : 'Search'}
-                </Button>
-            </div>
-
-            <div className="flex-grow prose prose-sm dark:prose-invert text-foreground/90 min-h-[100px] rounded-lg border border-border p-4 bg-background/30 flex items-center justify-center">
-                {isLoading ? (
-                     <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                        <Sparkles className="animate-pulse text-accent" />
-                        <p>The cosmos is contemplating your query...</p>
-                    </div>
-                ) : error ? (
-                    <Alert variant="destructive" className="bg-transparent border-0">
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                ) : summary ? (
-                    <p>{summary}</p>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center">Search for celestial, weather, and community events near you.</p>
-                )}
-            </div>
-        </CardContent>
+    <Card className="glass-card h-full flex flex-col">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="text-accent" />
+          Events Catalogue
+        </CardTitle>
+        <CardDescription>A curated list of celestial events and holidays.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-grow p-0">
+        <ScrollArea className="h-[400px] md:h-full">
+          <div className="p-6 space-y-6">
+            {Object.entries(eventsByMonth).map(([month, events]) => (
+              <div key={month}>
+                <h3 className="font-headline text-lg font-semibold mb-3">{month}</h3>
+                <ul className="space-y-4">
+                  {events.map(event => (
+                    <li key={event.title} className="flex flex-col sm:flex-row gap-4 items-start">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground w-full sm:w-28">
+                        <Calendar className="h-4 w-4" />
+                        <span>{format(parseISO(event.date), 'MMM dd')}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold">{event.title}</h4>
+                        <p className="text-sm text-muted-foreground">{event.description}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Badge variant={event.category === 'cosmic' ? 'secondary' : 'outline'} className="capitalize">{event.category}</Badge>
+                            {event.link && (
+                                <a href={event.link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                                    Learn more
+                                </a>
+                            )}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
     </Card>
   );
 }
