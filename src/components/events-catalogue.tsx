@@ -1,14 +1,27 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { defaultEvents } from '@/lib/events';
 import { format, parseISO } from 'date-fns';
-import { Sparkles, Calendar } from 'lucide-react';
+import { Sparkles, Calendar, Search, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { findEvents, type FindEventsOutput } from '@/ai/flows/find-events-flow';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+const searchTopics = ['Nature', 'Climate', 'Stargazing', 'Sustainable Living'];
 
 export default function EventsCatalogue() {
-  // Group events by month
+  const [discoveredEvents, setDiscoveredEvents] = useState<FindEventsOutput['events']>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [currentTopic, setCurrentTopic] = useState<string | null>(null);
+
+
+  // Group curated events by month
   const eventsByMonth = defaultEvents.reduce((acc, event) => {
     const month = format(parseISO(event.date), 'MMMM yyyy');
     if (!acc[month]) {
@@ -17,6 +30,27 @@ export default function EventsCatalogue() {
     acc[month].push(event);
     return acc;
   }, {} as Record<string, typeof defaultEvents>);
+  
+  const handleSearch = async (topic: string) => {
+    setIsSearching(true);
+    setDiscoveredEvents([]);
+    setSearchError(null);
+    setCurrentTopic(topic);
+
+    try {
+        const result = await findEvents({ topic });
+        if (result && result.events.length > 0) {
+            setDiscoveredEvents(result.events);
+        } else {
+            setSearchError(`No new events found for "${topic}". Try another topic.`);
+        }
+    } catch (error) {
+        console.error("Failed to find events:", error);
+        setSearchError("An error occurred while searching for events. Please try again.");
+    } finally {
+        setIsSearching(false);
+    }
+  };
 
   return (
     <Card className="glass-card h-full flex flex-col">
@@ -25,7 +59,7 @@ export default function EventsCatalogue() {
           <Sparkles className="text-accent" />
           Events Catalogue
         </CardTitle>
-        <CardDescription>A curated list of celestial events and holidays.</CardDescription>
+        <CardDescription>A list of celestial events, holidays, and AI-discovered happenings.</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow p-0">
         <ScrollArea className="h-[400px] md:h-full">
@@ -60,6 +94,57 @@ export default function EventsCatalogue() {
           </div>
         </ScrollArea>
       </CardContent>
+      <Separator />
+      <CardFooter className="p-4 flex-col items-start gap-4">
+        <div>
+            <h3 className="font-semibold flex items-center gap-2 mb-2"><Search className="h-4 w-4 text-accent"/>Discover More Events</h3>
+            <div className="flex flex-wrap gap-2">
+                {searchTopics.map(topic => (
+                    <Button key={topic} variant="outline" size="sm" onClick={() => handleSearch(topic)} disabled={isSearching}>
+                         {isSearching && currentTopic === topic ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {topic}
+                    </Button>
+                ))}
+            </div>
+        </div>
+        
+        {isSearching && (
+            <div className="w-full text-center text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Finding events for "{currentTopic}"...</span>
+            </div>
+        )}
+
+        {searchError && !isSearching && (
+            <Alert variant="destructive" className="w-full">
+                <AlertTitle>Search Failed</AlertTitle>
+                <AlertDescription>{searchError}</AlertDescription>
+            </Alert>
+        )}
+        
+        {discoveredEvents.length > 0 && !isSearching && (
+             <div className="w-full space-y-4">
+                <h4 className="font-semibold">Discovered Events for "{currentTopic}"</h4>
+                 <ul className="space-y-4">
+                  {discoveredEvents.map(event => (
+                    <li key={event.title} className="flex flex-col sm:flex-row gap-4 items-start">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground w-full sm:w-28">
+                        <Calendar className="h-4 w-4" />
+                        <span>{format(parseISO(event.date), 'MMM dd')}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold">{event.title}</h4>
+                        <p className="text-sm text-muted-foreground">{event.description}</p>
+                         <a href={event.link} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
+                            Learn more
+                        </a>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+             </div>
+        )}
+      </CardFooter>
     </Card>
   );
 }
