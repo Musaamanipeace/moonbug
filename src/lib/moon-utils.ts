@@ -290,3 +290,34 @@ export function getLunarDate(date: Date) {
 
     return null; // Should not happen for valid dates
 }
+
+/**
+ * Calculates a symbolic, generational time based on full moon cycles since 1 AD.
+ * In this system: 1 "Lunar Year" = 1 Full Moon Cycle. 1 "Generation" = 12 Cycles.
+ * @param date The current date.
+ * @returns An object with tenth generation, generation, and lunar year.
+ */
+export function calculateGenerationalTime(date: Date) {
+  const AD_EPOCH = new Date('0001-01-01T00:00:00Z').getTime();
+
+  // Find the first full moon on or after 1 AD.
+  let firstFullMoonAfterEpoch = FULL_MOON_EPOCH;
+  while (firstFullMoonAfterEpoch > AD_EPOCH) {
+    firstFullMoonAfterEpoch -= SYNODIC_MONTH_MS;
+  }
+  // The loop goes one step too far, so add it back.
+  firstFullMoonAfterEpoch += SYNODIC_MONTH_MS;
+  
+  const timeSinceFirstMoon = date.getTime() - firstFullMoonAfterEpoch;
+  if (timeSinceFirstMoon < 0) {
+    return { tenthGeneration: 1, generation: 1, lunarYear: 1 };
+  }
+
+  const totalCycles = Math.floor(timeSinceFirstMoon / SYNODIC_MONTH_MS);
+
+  const tenthGeneration = Math.floor(totalCycles / 120) + 1;
+  const generation = Math.floor((totalCycles % 120) / 12) + 1;
+  const lunarYear = (totalCycles % 12) + 1;
+
+  return { tenthGeneration, generation, lunarYear };
+}
