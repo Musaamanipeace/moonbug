@@ -1,8 +1,7 @@
 
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
   Sidebar,
@@ -50,11 +49,9 @@ function AuthStatus({ navigatingTo, onNavigate }: { navigatingTo: string | null,
   if (isUserLoading) {
     return (
       <SidebarMenuItem>
-        <SidebarMenuButton asChild isActive={pathname === '/profile'}>
-          <Link href="/profile">
-            <Loader2 className="animate-spin" />
-            <span>Authenticating...</span>
-          </Link>
+        <SidebarMenuButton isActive={pathname === '/profile'}>
+          <Loader2 className="animate-spin" />
+          <span>Authenticating...</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
@@ -64,11 +61,9 @@ function AuthStatus({ navigatingTo, onNavigate }: { navigatingTo: string | null,
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild isActive={pathname === '/profile'}>
-        <Link href="/profile" onClick={() => onNavigate('/profile')}>
-          {isNavigating ? <Loader2 className="animate-spin" /> : (user ? <User /> : <LogIn />)}
-          <span>{user ? (user.isAnonymous ? 'Guest' : user.email?.split('@')[0]) : 'Profile'}</span>
-        </Link>
+      <SidebarMenuButton isActive={pathname === '/profile'} onClick={() => onNavigate('/profile')}>
+        {isNavigating ? <Loader2 className="animate-spin" /> : (user ? <User /> : <LogIn />)}
+        <span>{user ? (user.isAnonymous ? 'Guest' : user.email?.split('@')[0]) : 'Profile'}</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -78,6 +73,7 @@ function AuthStatus({ navigatingTo, onNavigate }: { navigatingTo: string | null,
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { isMobile } = useSidebar();
   const pathname = usePathname();
+  const router = useRouter();
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
 
   useEffect(() => {
@@ -89,6 +85,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     // Only set loading state if navigating to a different page.
     if (pathname !== href) {
       setNavigatingTo(href);
+      router.push(href);
     }
   };
   
@@ -126,11 +123,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <SidebarMenu>
             {navItems.map((item) => (
                <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton asChild isActive={pathname === item.href}>
-                  <Link href={item.href} onClick={() => handleNavigate(item.href)}>
-                    {navigatingTo === item.href ? <Loader2 className="animate-spin" /> : <item.icon />}
-                    <span>{item.label}</span>
-                  </Link>
+                <SidebarMenuButton isActive={pathname === item.href} onClick={() => handleNavigate(item.href)}>
+                  {navigatingTo === item.href ? <Loader2 className="animate-spin" /> : <item.icon />}
+                  <span>{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
