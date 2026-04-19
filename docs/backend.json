@@ -155,6 +155,25 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the challenge was created." }
       },
       "required": ["title", "description", "type", "participants", "createdAt"]
+    },
+    "UserEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserEvent",
+      "type": "object",
+      "description": "A custom event created by a user on their lunar calendar.",
+      "properties": {
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The date of the event in YYYY-MM-DD format."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the event was created."
+        }
+      },
+      "required": ["date", "createdAt"]
     }
   },
   "auth": {
@@ -175,6 +194,12 @@
         "$ref": "#/entities/StickyNote"
       },
       "description": "A subcollection for a user's notes. For now, we only use a single document with the ID 'main'."
+    },
+    "/users/{userId}/events/{eventId}": {
+      "schema": {
+        "$ref": "#/entities/UserEvent"
+      },
+      "description": "A subcollection for a user's custom calendar events."
     },
     "/posts/{postId}": {
       "schema": {

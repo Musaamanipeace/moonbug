@@ -17,6 +17,10 @@ service cloud.firestore {
       match /sticky_notes/{noteId} {
          allow read, write: if isOwner(userId);
       }
+
+      match /events/{eventId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     match /posts/{postId} {
