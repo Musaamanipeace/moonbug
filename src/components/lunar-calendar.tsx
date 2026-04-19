@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -133,7 +134,7 @@ export default function LunarCalendar() {
                         onClick={() => handleDayClick(dayDate)}
                         className={cn(
                           "relative flex items-center justify-center h-9 w-9 rounded-full transition-colors hover:bg-muted/50",
-                          isToday && "bg-primary/80",
+                          isToday && "bg-secondary",
                           highlightClasses.length > 0 && `ring-2 ring-offset-2 ring-offset-background ${highlightClasses.join(' ')}`
                         )}
                       >
