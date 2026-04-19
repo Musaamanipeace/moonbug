@@ -25,6 +25,11 @@ export const MOON_PHASES = [
   'Waning Crescent',
 ];
 
+const LUNAR_MONTH_NAMES = [
+  'First Moon', 'Second Moon', 'Third Moon', 'Fourth Moon', 'Fifth Moon', 'Sixth Moon',
+  'Seventh Moon', 'Eighth Moon', 'Ninth Moon', 'Tenth Moon', 'Eleventh Moon', 'Twelfth Moon'
+];
+
 /**
  * Calculates the moon phase for a given date.
  * @param date The date to calculate the phase for.
@@ -194,4 +199,87 @@ export function getPhaseTransitionTimes(date: Date): { elapsedHours: number; rem
   const remainingHours = timeRemainingMs / (1000 * 60 * 60);
   
   return { elapsedHours, remainingHours };
+}
+
+/**
+ * Finds the date of the first new moon on or after a given date.
+ * @param startDate The date to start searching from.
+ * @returns The Date of the first new moon.
+ */
+function getNextNewMoon(startDate: Date): Date {
+  const timeSinceEpoch = startDate.getTime() - NEW_MOON_EPOCH;
+  const cyclesSinceEpoch = timeSinceEpoch / SYNODIC_MONTH_MS;
+  const nextCycle = Math.ceil(cyclesSinceEpoch);
+  const nextNewMoonTime = NEW_MOON_EPOCH + nextCycle * SYNODIC_MONTH_MS;
+  return new Date(nextNewMoonTime);
+}
+
+/**
+ * Calculates information about the lunar year for a given date.
+ * A lunar year is defined as the 12 new moons following the first new moon of the Gregorian year.
+ * @param date The date to get the lunar year for.
+ * @returns An object describing the lunar year.
+ */
+export function getLunarYearDetails(date: Date) {
+  const gregorianYear = date.getFullYear();
+  const yearStart = new Date(gregorianYear, 0, 1);
+  
+  const lunarYearStart = getNextNewMoon(yearStart);
+  
+  const months = [];
+  let currentMoon = lunarYearStart;
+  for (let i = 0; i < 12; i++) {
+    const nextMoon = new Date(currentMoon.getTime() + SYNODIC_MONTH_MS);
+    months.push({
+      month: i + 1,
+      name: LUNAR_MONTH_NAMES[i],
+      startDate: currentMoon,
+      endDate: nextMoon,
+    });
+    currentMoon = nextMoon;
+  }
+  
+  const lunarYearEnd = months[11].endDate;
+  
+  return {
+    gregorianYear,
+    lunarYearStart,
+    lunarYearEnd,
+    months,
+  };
+}
+
+
+/**
+ * Calculates the lunar date (month, day) for a given Gregorian date.
+ * @param date The Gregorian date.
+ * @returns An object with the lunar date information, or null if it's an intercalary day.
+ */
+export function getLunarDate(date: Date) {
+    const details = getLunarYearDetails(date);
+
+    if (date < details.lunarYearStart || date >= details.lunarYearEnd) {
+        return {
+            lunarMonth: null,
+            lunarDay: null,
+            monthName: null,
+            isIntercalary: true,
+            daysIntoYear: Math.floor((date.getTime() - details.lunarYearStart.getTime()) / (1000 * 60 * 60 * 24))
+        };
+    }
+
+    for (const month of details.months) {
+        if (date >= month.startDate && date < month.endDate) {
+            const dayOfMonth = Math.floor((date.getTime() - month.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+            return {
+                lunarMonth: month.month,
+                lunarDay: dayOfMonth,
+                monthName: month.name,
+                isIntercalary: false,
+                daysIntoYear: null
+            };
+        }
+    }
+
+    return null; // Should not happen within the checked range
 }
