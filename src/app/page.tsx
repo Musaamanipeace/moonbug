@@ -1,4 +1,4 @@
-import LunarCalculator from '@/components/lunar-calculator';
+
 import CurrentConditions from '@/components/current-conditions';
 import EventsCatalogue from '@/components/events-catalogue';
 import StickyNote from '@/components/sticky-note';
@@ -17,16 +17,15 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           <div className="lg:col-span-2">
-            <LunarCalculator />
-          </div>
-
-          <CurrentConditions />
-          
-          <div className="lg:col-span-2">
             <EventsCatalogue />
           </div>
 
-          <StickyNote />
+          <div className="lg:col-span-1">
+            <div className="grid gap-6">
+              <CurrentConditions />
+              <StickyNote />
+            </div>
+          </div>
 
         </div>
         <footer className="text-center pt-12 text-muted-foreground text-sm">

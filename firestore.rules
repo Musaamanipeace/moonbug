@@ -1,129 +1,22 @@
-/**
- * This ruleset enforces a strict user-ownership model combined with structural
- * segregation for public data, ensuring security and performance for the
- * LunarEchoes application.
- *
- * Core Philosophy:
- * The security model is built on two primary principles:
- * 1. User-Private Data: All data specific to a user is private and can only
- *    be accessed or modified by that authenticated user.
- * 2. Public-Read Data: Data intended for global consumption is stored in a
- *    separate, dedicated collection that is read-only for all clients.
- *
- * Data Structure:
- * - /users/{userId}: A top-level collection where each document represents a
- *   user's private profile. The document ID is the user's Authentication UID.
- * - /users/{userId}/sticky_notes/{stickyNoteId}: A subcollection containing a
- *   user's private notes, inheriting ownership from the parent path.
- * - /news_articles/{newsArticleId}: A top-level collection for news summaries
- *   that are publicly readable by anyone, including unauthenticated users.
- *
- * Key Security Decisions:
- * - No User Listing: It is not possible for any client to list all documents
- *   in the `/users` collection, protecting user privacy.
- * - Client-Side Writes are Denied for Public Data: Clients can read from the
- *   `/news_articles` collection, but all write operations (create, update,
- *   delete) are disabled. This implies that content is managed by a trusted
- *   backend service or administrative tool.
- * - Default Deny: Any path not explicitly matched is inaccessible.
- *
- * Denormalization for Authorization:
- * The `StickyNote` documents under `/users/{userId}/sticky_notes` contain a
- * denormalized `userId` field. This allows rules to verify ownership directly
- * from the document's data (`resource.data.userId`) without performing a costly
- * and slow `get()` on the parent user profile document. Rules enforce that this
- * internal `userId` always matches the `{userId}` in the path.
- *
- * Structural Segregation:
- * User-private data (`/users`) is structurally separated from public data
- * (`/news_articles`). This is a critical design choice that simplifies security
- * rules, improves query performance, and prevents accidental data leakage by
- * ensuring private and public data cannot be mixed within the same collection.
- */
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions to improve readability and maintainability.
-    
-    /**
-     * Checks if the current request is from an authenticated user.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the authenticated user's UID matches the provided userId.
-     * This is the foundation of the user-ownership model.
-     * @param userId The UID to check against the authenticated user.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
-    /**
-     * Checks if a document currently exists in Firestore.
-     * Crucial for protecting update and delete operations from acting on
-     * non-existent paths, which is a security best practice.
-     */
-    function isExistingDoc() {
-      return resource != null;
-    }
 
-    /**
-     * Combines ownership and existence checks for state-changing operations.
-     * Ensures that a user can only modify or delete documents they own AND that
-     * already exist.
-     * @param userId The UID to check for ownership.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && isExistingDoc();
-    }
-
-    /**
-     * @description Rules for the UserProfile document.
-     * @path /users/{userId}
-     * @allow (create) An authenticated user creates their own profile document, where the document ID matches their UID.
-     * @deny (get) An authenticated user tries to read another user's profile.
-     * @principle Restricts access to a user's own data tree and enforces self-creation.
-     */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
-
-      /**
-       * @description Rules for a user's private sticky notes.
-       * @path /users/{userId}/sticky_notes/{stickyNoteId}
-       * @allow (create) An authenticated user creates a new sticky note under their own user path.
-       * @deny (update) An authenticated user tries to update a sticky note belonging to another user.
-       * @principle Enforces document ownership within a user-specific subcollection and validates relational integrity.
-       */
-      match /sticky_notes/{stickyNoteId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
+      
+      match /sticky_notes/{noteId} {
+         allow read, write: if isOwner(userId);
       }
-    }
-
-    /**
-     * @description Rules for publicly readable news article summaries.
-     * @path /news_articles/{newsArticleId}
-     * @allow (get) Any user, including unauthenticated ones, can read a news article.
-     * @deny (create) Any client-side attempt to create, update, or delete a news article is rejected.
-     * @principle Provides public read-only access and prevents all client-side write operations.
-     */
-    match /news_articles/{newsArticleId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
     }
   }
 }
