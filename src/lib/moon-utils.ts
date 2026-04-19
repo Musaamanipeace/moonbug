@@ -4,10 +4,10 @@
 
 const LUNAR_CYCLE_DAYS = 29.530588853;
 const SYNODIC_MONTH_MS = LUNAR_CYCLE_DAYS * 24 * 60 * 60 * 1000;
-// A known new moon: Jan 21, 2023, 20:53 UTC
-const NEW_MOON_EPOCH = new Date('2023-01-21T20:53:00Z').getTime();
-// A known full moon: Jan 6, 2023, 23:08 UTC
-const FULL_MOON_EPOCH = new Date('2023-01-06T23:08:00Z').getTime();
+// A more standard astronomical epoch: Jan 6, 2000, 18:14 UTC
+const NEW_MOON_EPOCH = new Date('2000-01-06T18:14:00Z').getTime();
+// A full moon near the new epoch: Jan 21, 2000, 04:41 UTC
+const FULL_MOON_EPOCH = new Date('2000-01-21T04:41:00Z').getTime();
 
 const PHASE_LENGTH_MS = SYNODIC_MONTH_MS / 8;
 // Epoch of the first transition after the reference new moon (New Moon -> Waxing Crescent) is at 1/16th of a cycle
