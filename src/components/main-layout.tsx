@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -26,6 +27,7 @@ import {
   PanelLeft,
   LogIn,
   Loader2,
+  History,
 } from 'lucide-react';
 import { useUser } from '@/firebase';
 
@@ -35,6 +37,7 @@ const navItems = [
   { href: '/my-moon', label: 'My Moon', icon: Moon },
   { href: '/events', label: 'Events', icon: Sparkles },
   { href: '/calendar', label: 'Calendar', icon: Calendar },
+  { href: '/history', label: 'History', icon: History },
   { href: '/snaps', label: 'Snaps', icon: Camera },
   { href: '/challenges', label: 'Challenges', icon: Swords },
   { href: '/posts', label: 'Posts', icon: BookOpen },

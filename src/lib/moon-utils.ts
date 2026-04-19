@@ -258,28 +258,35 @@ export function getLunarYearDetails(date: Date) {
 export function getLunarDate(date: Date) {
     const details = getLunarYearDetails(date);
 
-    if (date < details.lunarYearStart || date >= details.lunarYearEnd) {
-        return {
-            lunarMonth: null,
-            lunarDay: null,
-            monthName: null,
-            isIntercalary: true,
-            daysIntoYear: Math.floor((date.getTime() - details.lunarYearStart.getTime()) / (1000 * 60 * 60 * 24))
-        };
+    // Handle dates that fall before the start of the calculated lunar year.
+    // This happens for dates in January before the first new moon.
+    if (date < details.lunarYearStart) {
+        const prevYearDetails = getLunarYearDetails(new Date(date.getFullYear() - 1, 11, 31));
+        for (const month of prevYearDetails.months) {
+            if (date >= month.startDate && date < month.endDate) {
+                const dayOfMonth = Math.floor((date.getTime() - month.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                return {
+                    lunarYear: prevYearDetails.gregorianYear,
+                    lunarMonth: month.month,
+                    lunarDay: dayOfMonth,
+                    monthName: month.name,
+                };
+            }
+        }
     }
 
+    // Handle dates within the primary calculated lunar year.
     for (const month of details.months) {
         if (date >= month.startDate && date < month.endDate) {
             const dayOfMonth = Math.floor((date.getTime() - month.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
             return {
+                lunarYear: details.gregorianYear,
                 lunarMonth: month.month,
                 lunarDay: dayOfMonth,
                 monthName: month.name,
-                isIntercalary: false,
-                daysIntoYear: null
             };
         }
     }
 
-    return null; // Should not happen within the checked range
+    return null; // Should not happen for valid dates
 }

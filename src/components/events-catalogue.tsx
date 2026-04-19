@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { defaultEvents } from '@/lib/events';
 import { format, parseISO } from 'date-fns';
@@ -11,8 +12,30 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { findEvents, type FindEventsOutput } from '@/ai/flows/find-events-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getLunarDate } from '@/lib/moon-utils';
 
 const searchTopics = ['Nature', 'Climate', 'Stargazing', 'Sustainable Living'];
+
+function TodayInLunar() {
+    const [lunarDateString, setLunarDateString] = useState<string | null>(null);
+
+    useEffect(() => {
+        const today = new Date();
+        const lunarDate = getLunarDate(today);
+        if (lunarDate) {
+            setLunarDateString(`Day ${lunarDate.lunarDay} of the ${lunarDate.monthName}, Lunar Year ${lunarDate.lunarYear}`);
+        }
+    }, []);
+
+    if (!lunarDateString) {
+        return <div className="h-5 w-full max-w-sm animate-pulse rounded-md bg-muted" />;
+    }
+
+    return (
+        <p className="text-sm font-medium text-muted-foreground">{lunarDateString}</p>
+    );
+}
+
 
 export default function EventsCatalogue() {
   const [discoveredEvents, setDiscoveredEvents] = useState<FindEventsOutput['events']>([]);
@@ -61,6 +84,10 @@ export default function EventsCatalogue() {
         </CardTitle>
         <CardDescription>A list of celestial events, holidays, and AI-discovered happenings.</CardDescription>
       </CardHeader>
+       <div className="px-6 pb-4 border-b">
+         <h4 className="text-xs uppercase font-bold text-muted-foreground mb-1">Today's Lunar Date</h4>
+         <TodayInLunar />
+      </div>
       <CardContent className="flex-grow p-0">
         <ScrollArea className="h-[400px] md:h-full">
           <div className="p-6 space-y-6">
