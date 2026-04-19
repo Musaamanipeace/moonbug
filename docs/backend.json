@@ -85,6 +85,58 @@
         "createdAt",
         "commentCount"
       ]
+    },
+    "Snap": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Snap",
+      "type": "object",
+      "description": "A photograph shared by a user in the Snaps gallery.",
+      "properties": {
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL of the uploaded image."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the snap."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the snap."
+        },
+        "imageHint": {
+          "type": "string",
+          "description": "One or two keywords for AI image search."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "The UID of the user who uploaded the snap."
+        },
+        "authorName": {
+          "type": "string",
+          "description": "The display name of the user who uploaded the snap."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the snap was created."
+        },
+        "likes": {
+          "type": "number",
+          "description": "The number of likes the snap has received."
+        }
+      },
+      "required": [
+        "imageUrl",
+        "description",
+        "category",
+        "authorId",
+        "authorName",
+        "createdAt",
+        "likes",
+        "imageHint"
+      ]
     }
   },
   "auth": {
@@ -111,6 +163,12 @@
         "$ref": "#/entities/Post"
       },
       "description": "A collection of all posts shared by the community. The document ID is auto-generated."
+    },
+    "/snaps/{snapId}": {
+      "schema": {
+        "$ref": "#/entities/Snap"
+      },
+      "description": "A collection of all snaps shared by the community. The document ID is auto-generated."
     }
   }
 }

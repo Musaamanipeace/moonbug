@@ -24,5 +24,14 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow update, delete: if isOwner(request.resource.data.authorId);
     }
+
+    match /snaps/{snapId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+      // For now, let any signed in user update (e.g., to like a snap).
+      // In a real app, this would need to be more granular.
+      allow update: if isSignedIn(); 
+      allow delete: if isOwner(request.resource.data.authorId);
+    }
   }
 }
