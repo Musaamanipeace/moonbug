@@ -1,6 +1,7 @@
-
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Sidebar,
   SidebarContent,
@@ -25,8 +26,21 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 
+const navItems = [
+  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/my-moon', label: 'My Moon', icon: Moon },
+  { href: '/events', label: 'Events', icon: Sparkles },
+  { href: '/calendar', label: 'Calendar', icon: Calendar },
+  { href: '/snaps', label: 'Snaps', icon: Camera },
+  { href: '/challenges', label: 'Challenges', icon: Swords },
+  { href: '/posts', label: 'Posts', icon: BookOpen },
+  { href: '/profile', label: 'Profile', icon: User },
+];
+
+
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { isMobile } = useSidebar();
+  const pathname = usePathname();
   
   return (
     <div className="flex min-h-screen">
@@ -41,54 +55,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#" isActive>
-                <LayoutDashboard />
-                Dashboard
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <Moon />
-                My Moon
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <Sparkles />
-                Events
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <Calendar />
-                Calendar
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <Camera />
-                Snaps
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <Swords />
-                Challenges
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <BookOpen />
-                Posts
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#">
-                <User />
-                Profile
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {navItems.map((item) => (
+               <SidebarMenuItem key={item.label}>
+                <SidebarMenuButton asChild isActive={pathname === item.href}>
+                  <Link href={item.href}>
+                    <item.icon />
+                    {item.label}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
