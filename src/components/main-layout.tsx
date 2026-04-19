@@ -36,7 +36,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-foreground font-mono font-bold text-lg">
               Mb
             </div>
-            <span className="font-bold text-lg">Moonbud</span>
+            <span className="font-bold text-lg">Moonbug</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -102,7 +102,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-accent-foreground font-mono font-bold text-sm">
                   Mb
                 </div>
-                <span className="font-bold text-md">Moonbud</span>
+                <span className="font-bold text-md">Moonbug</span>
               </div>
           </header>
         )}

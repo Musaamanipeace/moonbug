@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 export const metadata: Metadata = {
-  title: 'Moonbud',
+  title: 'Moonbug',
   description: 'Align your productivity with the rhythms of nature.',
 };
 
