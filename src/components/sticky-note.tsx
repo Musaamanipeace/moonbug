@@ -42,7 +42,7 @@ export default function StickyNote() {
   }, [note, isLoaded]);
 
   return (
-    <Card className="bg-accent/10 border-accent/50">
+    <Card className="glass-card bg-accent/10 border-accent/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-accent">
           <Pin />

@@ -4,17 +4,17 @@
 
 @layer base {
   :root {
-    --background: 236 17% 19%; /* #282A3A - Very dark desaturated Indigo */
+    --background: 0 0% 4%; /* True Black for OLED */
     --foreground: 0 0% 98%;
 
-    --card: 236 17% 22%;
+    --card: 220 15% 15%;
     --card-foreground: 0 0% 98%;
 
     --popover: 236 17% 19%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 275 100% 35%; /* Lighter Deep Indigo for better visibility */
-    --primary-foreground: 0 0% 98%;
+    --primary: 210 40% 96%; /* Cool Silver/Blue */
+    --primary-foreground: 210 40% 10%;
 
     --secondary: 236 17% 30%;
     --secondary-foreground: 0 0% 98%;
@@ -22,7 +22,7 @@
     --muted: 236 17% 30%;
     --muted-foreground: 0 0% 63.9%;
     
-    --accent: 51 100% 50%; /* #FFD700 - Gold */
+    --accent: 51 100% 50%; /* Gold */
     --accent-foreground: 236 17% 10%; /* Dark text on Gold */
 
     --destructive: 0 84.2% 60.2%;
@@ -37,7 +37,16 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+
     --radius: 0.5rem;
+
+    /* Sidebar variables */
+    --sidebar-background: hsl(0 0% 8%);
+    --sidebar-foreground: hsl(0 0% 98%);
+    --sidebar-border: hsl(0 0% 15%);
+    --sidebar-accent: hsl(var(--accent));
+    --sidebar-accent-foreground: hsl(var(--accent-foreground));
+    --sidebar-ring: hsl(var(--ring));
   }
 
   .dark {
@@ -51,5 +60,11 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply border-border/20 bg-white/5 backdrop-blur-lg;
   }
 }

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { WandSparkles, CalendarRange, Info } from 'lucide-react';
 import { calculateLunarAge, countFullMoons, calculateLunarCyclesBetween, getMoonPhase } from '@/lib/moon-utils';
 import MoonPhaseIcon from './moon-phase-icon';
-import { parse, isValid, isBefore, isAfter, differenceInMilliseconds } from 'date-fns';
+import { parse, isValid, isBefore, isAfter } from 'date-fns';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type View = 'lunarAge' | 'lunarPeriod';
@@ -83,7 +83,7 @@ export default function LunarCalculator() {
 
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="glass-card h-full flex flex-col">
       <CardHeader>
         <CardTitle>Your Lunar Journey</CardTitle>
         <div className="flex items-center justify-between">

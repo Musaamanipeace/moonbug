@@ -20,27 +20,28 @@ type WeatherOption = typeof weatherOptions[0];
 type MoonPhase = ReturnType<typeof GetMoonPhaseType>;
 type PhaseTransition = ReturnType<typeof GetPhaseTransitionTimesType>;
 
-export default function RealtimeData() {
+export default function CurrentConditions() {
   const [now, setNow] = useState<Date | null>(null);
   const [weather, setWeather] = useState<WeatherOption | null>(null);
 
   useEffect(() => {
+    // Ensure this runs only on the client
     setNow(new Date());
     setWeather(weatherOptions[Math.floor(Math.random() * weatherOptions.length)]);
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(new Date()), 1000 * 60); // Update every minute
     return () => clearInterval(timer);
   }, []);
 
   const moonPhase: MoonPhase | null = now ? getMoonPhase(now) : null;
   const season: string | null = now ? getSeason(now) : null;
-  const time: string | null = now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : null;
+  const time: string | null = now ? now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : null;
   const date: string | null = now ? now.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : null;
   const moonPosition: string | null = now && moonPhase ? getMoonPosition(now, moonPhase.phaseValue) : null;
   const transitionTimes: PhaseTransition | null = now ? getPhaseTransitionTimes(now) : null;
 
 
   return (
-    <Card>
+    <Card className="glass-card">
       <CardHeader>
         <CardTitle>Current Conditions</CardTitle>
       </CardHeader>
