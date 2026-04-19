@@ -1,3 +1,60 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "snap-1",
+      "description": "A breathtaking view of the full moon.",
+      "imageUrl": "https://picsum.photos/seed/moon1/600/800",
+      "imageHint": "full moon",
+      "category": "moon"
+    },
+    {
+      "id": "snap-2",
+      "description": "The sun setting over the ocean.",
+      "imageUrl": "https://picsum.photos/seed/sun1/800/600",
+      "imageHint": "sunset ocean",
+      "category": "sun"
+    },
+    {
+      "id": "snap-3",
+      "description": "A starry night sky with milky way.",
+      "imageUrl": "https://picsum.photos/seed/sky1/800/600",
+      "imageHint": "milky way",
+      "category": "sky"
+    },
+    {
+      "id": "snap-4",
+      "description": "A lush green fern.",
+      "imageUrl": "https://picsum.photos/seed/plants1/600/800",
+      "imageHint": "fern plant",
+      "category": "plants"
+    },
+    {
+      "id": "snap-5",
+      "description": "Majestic mountain range at dawn.",
+      "imageUrl": "https://picsum.photos/seed/features1/800/600",
+      "imageHint": "mountain dawn",
+      "category": "physical features"
+    },
+    {
+      "id": "snap-6",
+      "description": "An unusual light in the night sky.",
+      "imageUrl": "https://picsum.photos/seed/ufo1/600/400",
+      "imageHint": "sky light",
+      "category": "ufos"
+    },
+    {
+      "id": "snap-7",
+      "description": "Crescent moon over a quiet city.",
+      "imageUrl": "https://picsum.photos/seed/moon2/600/800",
+      "imageHint": "crescent moon",
+      "category": "moon"
+    },
+    {
+      "id": "snap-8",
+      "description": "A single sunflower reaching for the sky.",
+      "imageUrl": "https://picsum.photos/seed/plants2/600/800",
+      "imageHint": "sunflower sky",
+      "category": "plants"
+    }
+  ]
 }
