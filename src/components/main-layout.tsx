@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -92,7 +91,24 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   
   return (
     <div className="flex min-h-screen">
-      <Sidebar side="left" variant="sidebar" collapsible="offcanvas">
+      <SidebarInset className="flex-1 flex flex-col">
+        {isMobile && (
+          <header className="p-2 border-b flex items-center justify-between">
+             <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-accent-foreground font-mono font-bold text-sm">
+                  Mb
+                </div>
+                <span className="font-bold text-md">Moonbug</span>
+              </div>
+            <SidebarTrigger size="default" className="w-auto h-auto px-2">
+                <PanelLeft />
+                <span className="text-sm font-medium">Menu</span>
+            </SidebarTrigger>
+          </header>
+        )}
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </SidebarInset>
+      <Sidebar side="right" variant="sidebar" collapsible="offcanvas">
         <SidebarHeader>
           <div className="flex items-center gap-2 p-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-accent-foreground font-mono font-bold text-lg">
@@ -117,23 +133,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </SidebarMenu>
         </SidebarContent>
       </Sidebar>
-      <SidebarInset className="flex-1 flex flex-col">
-        {isMobile && (
-          <header className="p-2 border-b flex items-center">
-            <SidebarTrigger size="default" className="w-auto h-auto px-2">
-                <PanelLeft />
-                <span className="text-sm font-medium">Menu</span>
-            </SidebarTrigger>
-             <div className="flex items-center gap-2 mx-auto">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-accent-foreground font-mono font-bold text-sm">
-                  Mb
-                </div>
-                <span className="font-bold text-md">Moonbug</span>
-              </div>
-          </header>
-        )}
-        <main className="flex-1 overflow-y-auto">{children}</main>
-      </SidebarInset>
     </div>
   );
 }
