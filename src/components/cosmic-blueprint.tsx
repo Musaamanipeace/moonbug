@@ -134,7 +134,7 @@ export default function CosmicBlueprint() {
                     </div>
                     <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-background/50">
                         <MoonPhaseIcon phase={lunarData.birthMoonPhase.phaseValue} size={40} />
-                        <span className="font-headline text-md font-bold text-accent">{lunarData.birthMoonPhase.phaseName}</span>
+                        <span className="text-xs text-muted-foreground text-center">Birth Moon Phase</span>
                     </div>
                 </CardContent>
                 <CardFooter>
