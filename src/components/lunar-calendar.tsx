@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { getLunarYearDetails, getMoonPhase, MOON_PHASES } from '@/lib/moon-utils';
 import { defaultEvents, type CalendarEvent } from '@/lib/events';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -11,6 +10,14 @@ import { cn } from '@/lib/utils';
 import { format, isSameDay, parseISO } from 'date-fns';
 import MoonPhaseIcon from './moon-phase-icon';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 
 const filterCategories = [
     { id: 'holiday', name: 'Holidays', color: 'ring-green-500', text: 'text-green-500', bg: 'bg-green-500' },
@@ -30,9 +37,24 @@ export default function LunarCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [userEvents, setUserEvents] = useState<Date[]>([]);
   const [activeFilters, setActiveFilters] = useState<string[]>(['holiday', 'cosmic', 'user']);
+  const [api, setApi] = useState<CarouselApi>()
 
   const yearDetails = getLunarYearDetails(currentDate);
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
+  
+  const currentMonthIndex = useMemo(() => {
+    return yearDetails.months.findIndex(month => today >= month.startDate && today < month.endDate);
+  }, [yearDetails.months, today]);
+
+  useEffect(() => {
+    if (!api) return;
+    if (currentMonthIndex !== -1) {
+      api.scrollTo(currentMonthIndex, true);
+    }
+    api.on("select", () => {
+      // You can add logic here if you want to react to month changes
+    });
+  }, [api, currentMonthIndex]);
 
   const handlePrevYear = () => {
     setCurrentDate(new Date(currentDate.getFullYear() - 1, currentDate.getMonth(), 1));
@@ -104,65 +126,71 @@ export default function LunarCalendar() {
           </div>
         </CardHeader>
         <CardContent className="p-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {yearDetails.months.map(month => {
-              const days = [];
-              const monthLength = Math.round((month.endDate.getTime() - month.startDate.getTime()) / (1000 * 60 * 60 * 24));
-              const isCurrentMonth = today >= month.startDate && today < month.endDate;
-              
-              for (let i = 0; i < monthLength; i++) {
-                const dayDate = new Date(month.startDate);
-                dayDate.setDate(dayDate.getDate() + i);
+            <Carousel setApi={setApi} opts={{ align: "start" }} className="w-full">
+                <CarouselContent>
+                    {yearDetails.months.map(month => {
+                    const days = [];
+                    const monthLength = Math.round((month.endDate.getTime() - month.startDate.getTime()) / (1000 * 60 * 60 * 24));
+                    const isCurrentMonth = today >= month.startDate && today < month.endDate;
+                    
+                    for (let i = 0; i < monthLength; i++) {
+                        const dayDate = new Date(month.startDate);
+                        dayDate.setDate(dayDate.getDate() + i);
 
-                const isToday = isSameDay(dayDate, today);
-                const phaseForDay = getMoonPhase(dayDate);
-                const lunarDayNumber = i + 1;
-                
-                const dateKey = format(dayDate, 'yyyy-MM-dd');
-                const eventsOnDay = eventsByDate.get(dateKey) || [];
-                const userEventOnDay = userEvents.find(d => isSameDay(d, dayDate));
-                
-                const highlightClasses = eventsOnDay
-                    .filter(event => activeFilters.includes(event.category))
-                    .map(event => filterCategories.find(f => f.id === event.category)?.color)
-                    .concat(userEventOnDay && activeFilters.includes('user') ? ['ring-accent'] : [])
-                    .filter(Boolean) as string[];
+                        const isToday = isSameDay(dayDate, today);
+                        const phaseForDay = getMoonPhase(dayDate);
+                        const lunarDayNumber = i + 1;
+                        
+                        const dateKey = format(dayDate, 'yyyy-MM-dd');
+                        const eventsOnDay = eventsByDate.get(dateKey) || [];
+                        const userEventOnDay = userEvents.find(d => isSameDay(d, dayDate));
+                        
+                        const highlightClasses = eventsOnDay
+                            .filter(event => activeFilters.includes(event.category))
+                            .map(event => filterCategories.find(f => f.id === event.category)?.color)
+                            .concat(userEventOnDay && activeFilters.includes('user') ? ['ring-accent'] : [])
+                            .filter(Boolean) as string[];
 
-                days.push(
-                  <Tooltip key={i} delayDuration={100}>
-                    <TooltipTrigger asChild>
-                      <button 
-                        onClick={() => handleDayClick(dayDate)}
-                        className={cn(
-                          "relative flex items-center justify-center h-9 w-9 rounded-full transition-colors hover:bg-muted/50",
-                          isToday && "bg-accent text-accent-foreground",
-                          highlightClasses.length > 0 && `ring-2 ring-offset-2 ring-offset-background ${highlightClasses.join(' ')}`
-                        )}
-                      >
-                        <MoonPhaseIcon phase={phaseForDay.phaseValue} size={32} />
-                        <span className="absolute text-xs font-bold text-background mix-blend-difference pointer-events-none">{lunarDayNumber}</span>
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="font-semibold">{format(dayDate, 'MMMM d, yyyy')}</p>
-                      <p className="text-muted-foreground">{phaseForDay.phaseName}</p>
-                       {eventsOnDay.map(e => <p key={e.title} className="text-sm">{e.title}</p>)}
-                       {userEventOnDay && <p className="text-sm text-accent">My Event</p>}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              }
+                        days.push(
+                        <Tooltip key={i} delayDuration={100}>
+                            <TooltipTrigger asChild>
+                            <button 
+                                onClick={() => handleDayClick(dayDate)}
+                                className={cn(
+                                "relative flex items-center justify-center h-9 w-9 rounded-full transition-colors hover:bg-muted/50",
+                                isToday && "bg-accent text-accent-foreground",
+                                highlightClasses.length > 0 && `ring-2 ring-offset-2 ring-offset-background ${highlightClasses.join(' ')}`
+                                )}
+                            >
+                                <MoonPhaseIcon phase={phaseForDay.phaseValue} size={32} />
+                                <span className="absolute text-xs font-bold text-background mix-blend-difference pointer-events-none">{lunarDayNumber}</span>
+                            </button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                            <p className="font-semibold">{format(dayDate, 'MMMM d, yyyy')}</p>
+                            <p className="text-muted-foreground">{phaseForDay.phaseName}</p>
+                            {eventsOnDay.map(e => <p key={e.title} className="text-sm">{e.title}</p>)}
+                            {userEventOnDay && <p className="text-sm text-accent">My Event</p>}
+                            </TooltipContent>
+                        </Tooltip>
+                        );
+                    }
 
-              return (
-                <div key={month.month} className="p-3 border border-border/20 rounded-lg bg-background/30">
-                  <h3 className={cn("font-bold text-center mb-2", isCurrentMonth ? "text-accent" : "text-primary")}>{month.name}</h3>
-                  <div className="grid grid-cols-7 gap-1.5 place-items-center">
-                    {days}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                    return (
+                        <CarouselItem key={month.month} className="md:basis-1/2 lg:basis-1/3">
+                            <div className="p-3 border border-border/20 rounded-lg bg-background/30 h-full">
+                                <h3 className={cn("font-bold text-center mb-2", isCurrentMonth ? "text-accent" : "text-primary")}>{month.name}</h3>
+                                <div className="grid grid-cols-7 gap-1.5 place-items-center">
+                                    {days}
+                                </div>
+                            </div>
+                        </CarouselItem>
+                    );
+                    })}
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+            </Carousel>
         </CardContent>
          <CardFooter className="flex-col items-start gap-4 pt-4 border-t mt-4">
             <div>
