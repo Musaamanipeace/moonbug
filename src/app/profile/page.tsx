@@ -6,10 +6,10 @@ import { z } from 'zod';
 import {
   useUser,
   useAuth,
-  initiateEmailSignIn,
-  initiateEmailSignUp,
   initiateAnonymousSignIn,
 } from '@/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { useState } from 'react';
 
 import MainLayout from '@/components/main-layout';
 import { Button } from '@/components/ui/button';
@@ -42,8 +42,9 @@ const formSchema = z.object({
 });
 
 export default function ProfilePage() {
-  const { user, isUserLoading, userError } = useUser();
+  const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const [authError, setAuthError] = useState<Error | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,12 +54,24 @@ export default function ProfilePage() {
     },
   });
 
-  const handleSignIn = (values: z.infer<typeof formSchema>) => {
-    initiateEmailSignIn(auth, values.email, values.password);
+  const handleSignIn = async (values: z.infer<typeof formSchema>) => {
+    setAuthError(null);
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // onAuthStateChanged will handle the rest.
+    } catch (error: any) {
+      setAuthError(error);
+    }
   };
 
-  const handleSignUp = (values: z.infer<typeof formSchema>) => {
-    initiateEmailSignUp(auth, values.email, values.password);
+  const handleSignUp = async (values: z.infer<typeof formSchema>) => {
+    setAuthError(null);
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      // onAuthStateChanged will handle the rest.
+    } catch (error: any) {
+      setAuthError(error);
+    }
   };
   
   const handleAnonymousSignIn = () => {
@@ -120,10 +133,10 @@ export default function ProfilePage() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                         {userError && (
+                         {authError && (
                             <Alert variant="destructive">
                               <AlertTitle>Authentication Error</AlertTitle>
-                              <AlertDescription>{userError.message}</AlertDescription>
+                              <AlertDescription>{authError.message}</AlertDescription>
                             </Alert>
                          )}
                         <FormField
