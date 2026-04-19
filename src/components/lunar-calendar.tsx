@@ -108,6 +108,7 @@ export default function LunarCalendar() {
             {yearDetails.months.map(month => {
               const days = [];
               const monthLength = Math.round((month.endDate.getTime() - month.startDate.getTime()) / (1000 * 60 * 60 * 24));
+              const isCurrentMonth = today >= month.startDate && today < month.endDate;
               
               for (let i = 0; i < monthLength; i++) {
                 const dayDate = new Date(month.startDate);
@@ -134,7 +135,7 @@ export default function LunarCalendar() {
                         onClick={() => handleDayClick(dayDate)}
                         className={cn(
                           "relative flex items-center justify-center h-9 w-9 rounded-full transition-colors hover:bg-muted/50",
-                          isToday && "bg-secondary",
+                          isToday && "bg-accent text-accent-foreground",
                           highlightClasses.length > 0 && `ring-2 ring-offset-2 ring-offset-background ${highlightClasses.join(' ')}`
                         )}
                       >
@@ -154,7 +155,7 @@ export default function LunarCalendar() {
 
               return (
                 <div key={month.month} className="p-3 border border-border/20 rounded-lg bg-background/30">
-                  <h3 className="font-bold text-center mb-2 text-primary">{month.name}</h3>
+                  <h3 className={cn("font-bold text-center mb-2", isCurrentMonth ? "text-accent" : "text-primary")}>{month.name}</h3>
                   <div className="grid grid-cols-7 gap-1.5 place-items-center">
                     {days}
                   </div>
