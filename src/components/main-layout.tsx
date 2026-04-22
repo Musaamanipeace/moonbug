@@ -71,7 +71,7 @@ function AuthStatus({ navigatingTo, onNavigate }: { navigatingTo: string | null,
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const { isMobile } = useSidebar();
+  const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
@@ -82,16 +82,34 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }, [pathname]);
 
   const handleNavigate = (href: string) => {
-    // Only set loading state if navigating to a different page.
-    if (pathname !== href) {
-      setNavigatingTo(href);
-      router.push(href);
+    // If we're already on the page, just close the sidebar if it's open
+    if (pathname === href) {
+        if (openMobile) {
+            setOpenMobile(false);
+        }
+        return;
     }
+    
+    // Otherwise, start navigation
+    setNavigatingTo(href);
+    if (openMobile) {
+      setOpenMobile(false); // Close sidebar on navigation
+    }
+    router.push(href);
   };
   
+  const handleMainContentClick = () => {
+    if (isMobile && openMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
-      <SidebarInset className="flex-1 flex flex-col">
+      <SidebarInset 
+        className="flex-1 flex flex-col"
+        onClick={handleMainContentClick}
+      >
         {isMobile && (
           <header className="p-2 border-b flex items-center justify-between">
             <SidebarTrigger asChild variant="ghost" className="h-auto p-0 justify-start">
