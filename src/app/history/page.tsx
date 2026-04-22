@@ -3,7 +3,7 @@ import MainLayout from '@/components/main-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { historicalEvents, type HistoricalEvent } from '@/lib/historical-events';
-import { getLunarDate } from '@/lib/moon-utils';
+import { getLunarDate, countNewMoonsSince } from '@/lib/moon-utils';
 import { format, parseISO, isValid } from 'date-fns';
 import { ScrollText } from 'lucide-react';
 
@@ -11,15 +11,25 @@ function HistoricalEventCard({ event }: { event: HistoricalEvent }) {
     const gregorianDate = parseISO(event.gregorianDate);
     const isDateValid = isValid(gregorianDate);
 
-    const lunarDateInfo = isDateValid ? getLunarDate(gregorianDate) : null;
-
-    const formattedLunarDate = lunarDateInfo
-        ? `Day ${lunarDateInfo.lunarDay} of the ${lunarDateInfo.monthName}, Lunar Year ${lunarDateInfo.lunarYear}`
-        : 'Not Applicable';
-
     const formattedGregorianDate = isDateValid
         ? format(gregorianDate, 'MMMM d, yyyy')
         : event.gregorianDate;
+
+    let formattedLunarDate: string;
+
+    if (isDateValid) {
+        const adEpoch = new Date('0001-01-01T00:00:00Z');
+        const totalMoons = countNewMoonsSince(adEpoch, gregorianDate);
+        const lunarDateInfo = getLunarDate(gregorianDate);
+        
+        if (lunarDateInfo) {
+            formattedLunarDate = `~${totalMoons.toLocaleString()}th New Moon, Day ${lunarDateInfo.lunarDay}`;
+        } else {
+            formattedLunarDate = 'Not Applicable';
+        }
+    } else {
+        formattedLunarDate = 'Not Applicable';
+    }
 
     return (
         <Card className="glass-card">

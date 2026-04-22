@@ -88,11 +88,12 @@ export function countFullMoonsSince(startDate: Date): number {
 /**
  * Calculates the number of new moons since a given start date.
  * @param startDate The date to start counting from.
+ * @param endDate The date to count until. Defaults to the current date.
  * @returns The total number of new moons.
  */
-export function countNewMoonsSince(startDate: Date): number {
-    const now = new Date();
-    if (startDate.getTime() > now.getTime()) return 0;
+export function countNewMoonsSince(startDate: Date, endDate: Date = new Date()): number {
+    const end = endDate;
+    if (startDate.getTime() > end.getTime()) return 0;
 
     // Find the first new moon *after* or on the start date.
     let nextNewMoon = NEW_MOON_EPOCH;
@@ -110,10 +111,10 @@ export function countNewMoonsSince(startDate: Date): number {
         nextNewMoon += SYNODIC_MONTH_MS;
     }
 
-    // Now count how many new moons from that point until now
-    if (nextNewMoon > now.getTime()) return 0;
+    // Now count how many new moons from that point until the end date
+    if (nextNewMoon > end.getTime()) return 0;
     
-    const moonsSinceFirst = (now.getTime() - nextNewMoon) / SYNODIC_MONTH_MS;
+    const moonsSinceFirst = (end.getTime() - nextNewMoon) / SYNODIC_MONTH_MS;
     return 1 + Math.floor(moonsSinceFirst);
 }
 
