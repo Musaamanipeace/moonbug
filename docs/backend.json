@@ -218,20 +218,17 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserEvent",
       "type": "object",
-      "description": "A custom event created by a user on their lunar calendar.",
+      "description": "A custom event created by a user.",
       "properties": {
-        "date": {
-          "type": "string",
-          "format": "date",
-          "description": "The date of the event in YYYY-MM-DD format."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of when the event was created."
-        }
+        "title": { "type": "string", "description": "The title of the event." },
+        "location": { "type": "string", "description": "The location of the event, can be a physical address or 'Online'." },
+        "date": { "type": "string", "format": "date", "description": "The optional date of the event in YYYY-MM-DD format." },
+        "authorId": { "type": "string", "description": "The UID of the user who created the event." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the event was created." },
+        "notificationTime": { "type": "string", "format": "date-time", "description": "Optional scheduled ISO 8601 time for a notification." },
+        "notificationVoice": { "type": "string", "enum": ["Algenib", "Achernar", "Enif"], "description": "The optional identifier for the notification voice." }
       },
-      "required": ["date", "createdAt"]
+      "required": ["title", "authorId", "createdAt"]
     }
   },
   "auth": {

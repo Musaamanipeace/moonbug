@@ -18,10 +18,29 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp, doc, Timestamp } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 
 const filterCategories = [
     { id: 'holiday', name: 'Holidays', color: 'ring-green-500', text: 'text-green-500', bg: 'bg-green-500' },
@@ -35,21 +54,35 @@ const phaseLegend = [
     { name: 'Quarter', phaseValue: 0.25 },
     { name: 'Gibbous', phaseValue: 0.375 },
     { name: 'Full', phaseValue: 0.5 },
-]
+];
 
 type UserEvent = {
   id: string;
-  date: string;
+  title: string;
+  location?: string;
+  date: string; // YYYY-MM-DD
   createdAt: Timestamp;
-}
+};
+
+const calendarEventSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters.'),
+});
 
 export default function LunarCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeFilters, setActiveFilters] = useState<string[]>(['holiday', 'cosmic', 'user']);
   const [api, setApi] = useState<CarouselApi>()
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof calendarEventSchema>>({
+    resolver: zodResolver(calendarEventSchema),
+    defaultValues: { title: '' },
+  });
 
   const eventsCollectionRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -60,7 +93,7 @@ export default function LunarCalendar() {
 
   const userEvents = useMemo(() => {
     if (!userEventsFromDb) return [];
-    return userEventsFromDb.map(event => parseISO(event.date));
+    return userEventsFromDb.map(event => ({ ...event, parsedDate: parseISO(event.date) }));
   }, [userEventsFromDb]);
 
   const yearDetails = getLunarYearDetails(currentDate);
@@ -75,9 +108,6 @@ export default function LunarCalendar() {
     if (currentMonthIndex !== -1) {
       api.scrollTo(currentMonthIndex, true);
     }
-    api.on("select", () => {
-      // You can add logic here if you want to react to month changes
-    });
   }, [api, currentMonthIndex]);
 
   const handlePrevYear = () => {
@@ -97,7 +127,7 @@ export default function LunarCalendar() {
   }, []);
   
   const handleDayClick = useCallback((date: Date) => {
-    if (!user || !eventsCollectionRef || !userEventsFromDb) {
+    if (!user) {
         toast({
             variant: 'destructive',
             title: 'Not signed in',
@@ -106,20 +136,23 @@ export default function LunarCalendar() {
         return;
      }
     
-    const dateString = format(date, 'yyyy-MM-dd');
-    const existingEvent = userEventsFromDb.find(event => event.date === dateString);
+    setSelectedDate(date);
+    setIsEventDialogOpen(true);
+  }, [user, toast]);
 
-    if (existingEvent) {
-        const eventDocRef = doc(eventsCollectionRef, existingEvent.id);
-        deleteDocumentNonBlocking(eventDocRef);
-    } else {
-        const newEvent = {
-            date: dateString,
-            createdAt: serverTimestamp(),
-        };
-        addDocumentNonBlocking(eventsCollectionRef, newEvent);
-    }
-  }, [user, eventsCollectionRef, userEventsFromDb, toast]);
+  const onEventSubmit = (values: z.infer<typeof calendarEventSchema>) => {
+    if (!user || !eventsCollectionRef || !selectedDate) return;
+    const newEvent = {
+        title: values.title,
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        authorId: user.uid,
+        createdAt: serverTimestamp(),
+    };
+    addDocumentNonBlocking(eventsCollectionRef, newEvent);
+    toast({ title: 'Event Added!', description: `"${values.title}" has been saved.` });
+    form.reset();
+    setIsEventDialogOpen(false);
+  }
   
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -184,13 +217,13 @@ export default function LunarCalendar() {
                         const lunarDayNumber = i + 1;
                         
                         const dateKey = format(dayDate, 'yyyy-MM-dd');
-                        const eventsOnDay = eventsByDate.get(dateKey) || [];
-                        const userEventOnDay = userEvents.find(d => isSameDay(d, dayDate));
+                        const publicEventsOnDay = eventsByDate.get(dateKey) || [];
+                        const userEventsOnDay = userEvents.filter(d => isSameDay(d.parsedDate, dayDate));
                         
-                        const highlightClasses = eventsOnDay
+                        const highlightClasses = publicEventsOnDay
                             .filter(event => activeFilters.includes(event.category))
                             .map(event => filterCategories.find(f => f.id === event.category)?.color)
-                            .concat(userEventOnDay && activeFilters.includes('user') ? ['ring-accent'] : [])
+                            .concat(userEventsOnDay.length > 0 && activeFilters.includes('user') ? ['ring-accent'] : [])
                             .filter(Boolean) as string[];
 
                         days.push(
@@ -211,8 +244,8 @@ export default function LunarCalendar() {
                             <TooltipContent>
                             <p className="font-semibold">{format(dayDate, 'MMMM d, yyyy')}</p>
                             <p className="text-muted-foreground">{phaseForDay.phaseName}</p>
-                            {eventsOnDay.map(e => <p key={e.title} className="text-sm">{e.title}</p>)}
-                            {userEventOnDay && <p className="text-sm text-accent">My Event</p>}
+                            {publicEventsOnDay.map(e => <p key={e.title} className="text-sm">{e.title}</p>)}
+                            {userEventsOnDay.map(e => <p key={e.id} className="text-sm text-accent">{e.title}</p>)}
                             </TooltipContent>
                         </Tooltip>
                         );
@@ -259,6 +292,31 @@ export default function LunarCalendar() {
             </div>
         </CardFooter>
       </Card>
+      <Dialog open={isEventDialogOpen} onOpenChange={setIsEventDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Add Event for {selectedDate && format(selectedDate, 'MMMM d, yyyy')}</DialogTitle>
+                <DialogDescription>Create a new personal event on this day.</DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onEventSubmit)} className="space-y-4">
+                    <FormField control={form.control} name="title" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Event Title</FormLabel>
+                            <FormControl><Input placeholder="e.g., Stargazing party" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+                    <DialogFooter>
+                        <Button type="submit" disabled={form.formState.isSubmitting}>
+                            {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
+                            Save Event
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }

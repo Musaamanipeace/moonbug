@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { defaultEvents } from '@/lib/events';
 import { format, parseISO } from 'date-fns';
-import { Sparkles, Calendar, Search, Loader2 } from 'lucide-react';
+import { Sparkles, Calendar, Search, Loader2, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,11 @@ import { Separator } from '@/components/ui/separator';
 import { findEvents, type FindEventsOutput } from '@/ai/flows/find-events-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import TodayLunarDate from './today-lunar-date';
+import Link from 'next/link';
 
 const searchTopics = ['Nature', 'Stargazing', 'Climate', 'Food', 'Technology'];
 
-export default function EventsCatalogue() {
+export default function EventsCatalogue({ showFooter = true }: { showFooter?: boolean }) {
   const [discoveredEvents, setDiscoveredEvents] = useState<FindEventsOutput['events']>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -148,6 +149,18 @@ export default function EventsCatalogue() {
                   ))}
                 </ul>
              </div>
+        )}
+
+        {showFooter && (
+            <>
+                <Separator className="my-2"/>
+                <Button asChild variant="ghost" className="w-full text-accent hover:text-accent">
+                    <Link href="/events">
+                        View All & Manage My Events
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+            </>
         )}
       </CardFooter>
     </Card>
