@@ -4,16 +4,22 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { historicalEvents, type HistoricalEvent } from '@/lib/historical-events';
 import { getLunarDate } from '@/lib/moon-utils';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { ScrollText } from 'lucide-react';
 
 function HistoricalEventCard({ event }: { event: HistoricalEvent }) {
     const gregorianDate = parseISO(event.gregorianDate);
-    const lunarDateInfo = getLunarDate(gregorianDate);
+    const isDateValid = isValid(gregorianDate);
+
+    const lunarDateInfo = isDateValid ? getLunarDate(gregorianDate) : null;
 
     const formattedLunarDate = lunarDateInfo
         ? `Day ${lunarDateInfo.lunarDay} of the ${lunarDateInfo.monthName}, Lunar Year ${lunarDateInfo.lunarYear}`
-        : 'Date unavailable';
+        : 'Not Applicable';
+
+    const formattedGregorianDate = isDateValid
+        ? format(gregorianDate, 'MMMM d, yyyy')
+        : event.gregorianDate;
 
     return (
         <Card className="glass-card">
@@ -27,7 +33,7 @@ function HistoricalEventCard({ event }: { event: HistoricalEvent }) {
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                 <div className="p-3 rounded-lg bg-background/50">
                     <h4 className="font-semibold text-muted-foreground">Gregorian Date</h4>
-                    <p className="font-mono text-foreground">{format(gregorianDate, 'MMMM d, yyyy')}</p>
+                    <p className="font-mono text-foreground">{formattedGregorianDate}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-background/50">
                     <h4 className="font-semibold text-muted-foreground">Lunar Date</h4>
@@ -39,10 +45,17 @@ function HistoricalEventCard({ event }: { event: HistoricalEvent }) {
 }
 
 export default function HistoryPage() {
-  // Sort events from most recent to oldest
-  const sortedEvents = historicalEvents.sort((a, b) => 
-    parseISO(b.gregorianDate).getTime() - parseISO(a.gregorianDate).getTime()
-  );
+  // Sort events from most recent to oldest, handling invalid dates
+  const sortedEvents = historicalEvents.sort((a, b) => {
+    const dateA = parseISO(a.gregorianDate);
+    const dateB = parseISO(b.gregorianDate);
+
+    // Treat invalid dates as infinitely old so they appear at the end of the descending list
+    const timeA = isValid(dateA) ? dateA.getTime() : -Infinity;
+    const timeB = isValid(dateB) ? dateB.getTime() : -Infinity;
+
+    return timeB - timeA;
+  });
 
   return (
     <MainLayout>

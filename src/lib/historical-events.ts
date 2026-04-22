@@ -1,6 +1,6 @@
 
 export type HistoricalEvent = {
-  gregorianDate: string; // YYYY-MM-DD
+  gregorianDate: string; // YYYY-MM-DD or descriptive string for ancient dates
   title: string;
   description: string;
   category: 'Humanity' | 'Science' | 'Conflict' | 'Exploration' | 'Extinction';
@@ -50,7 +50,7 @@ export const historicalEvents: HistoricalEvent[] = [
         category: 'Humanity'
     },
     {
-        gregorianDate: '0066-00-00',
+        gregorianDate: 'c. 66 million years ago',
         title: 'Chicxulub Impactor',
         description: 'An asteroid impact event that led to a mass extinction, including non-avian dinosaurs.',
         category: 'Extinction'
