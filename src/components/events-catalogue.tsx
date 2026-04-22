@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { defaultEvents } from '@/lib/events';
 import { format, parseISO } from 'date-fns';
-import { Sparkles, Calendar, Search, Loader2, ArrowRight } from 'lucide-react';
+import { Sparkles, Calendar, Search, Loader2, ArrowRight, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -13,14 +13,16 @@ import { findEvents, type FindEventsOutput } from '@/ai/flows/find-events-flow';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import TodayLunarDate from './today-lunar-date';
 import Link from 'next/link';
+import { Input } from '@/components/ui/input';
 
-const searchTopics = ['Nature', 'Stargazing', 'Climate', 'Food', 'Technology'];
+const searchTopics = ['Nature', 'Stargazing', 'Climate', 'Food', 'Technology', 'Art', 'Music'];
 
 export default function EventsCatalogue({ showFooter = true }: { showFooter?: boolean }) {
   const [discoveredEvents, setDiscoveredEvents] = useState<FindEventsOutput['events']>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [currentTopic, setCurrentTopic] = useState<string | null>(null);
+  const [currentSearch, setCurrentSearch] = useState<{topic: string, location?: string} | null>(null);
+  const [locationInput, setLocationInput] = useState('');
 
 
   // Group curated events by month
@@ -33,18 +35,23 @@ export default function EventsCatalogue({ showFooter = true }: { showFooter?: bo
     return acc;
   }, {} as Record<string, typeof defaultEvents>);
   
-  const handleSearch = async (topic: string) => {
+  const handleSearch = async (topic: string, location?: string) => {
     setIsSearching(true);
     setDiscoveredEvents([]);
     setSearchError(null);
-    setCurrentTopic(topic);
+    setCurrentSearch({ topic, location });
 
     try {
-        const result = await findEvents({ topic });
+        const result = await findEvents({ topic, location: location?.trim() });
         if (result && result.events.length > 0) {
             setDiscoveredEvents(result.events);
         } else {
-            setSearchError(`No new events found for "${topic}". Try another topic.`);
+            let errorMsg = `No new events found for "${topic}"`;
+            if (location) {
+                errorMsg += ` in "${location}"`;
+            }
+            errorMsg += ". Try another search.";
+            setSearchError(errorMsg);
         }
     } catch (error) {
         console.error("Failed to find events:", error);
@@ -53,6 +60,15 @@ export default function EventsCatalogue({ showFooter = true }: { showFooter?: bo
         setIsSearching(false);
     }
   };
+
+  const renderSearchHeader = () => {
+    if (!currentSearch) return null;
+    let text = `Discovered Events for "${currentSearch.topic}"`;
+    if (currentSearch.location) {
+      text += ` near "${currentSearch.location}"`;
+    }
+    return <h4 className="font-semibold">{text}</h4>
+  }
 
   return (
     <Card className="glass-card h-full flex flex-col">
@@ -104,10 +120,32 @@ export default function EventsCatalogue({ showFooter = true }: { showFooter?: bo
       <CardFooter className="p-4 flex-col items-start gap-4">
         <div>
             <h3 className="font-semibold flex items-center gap-2 mb-2"><Search className="h-4 w-4 text-accent"/>Discover More Events</h3>
-            <div className="flex flex-wrap gap-2">
+            <p className="text-sm text-muted-foreground mb-2">Search for events by topic, or add a location to find happenings near you.</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+                <Input 
+                    placeholder="City, State, or Country" 
+                    value={locationInput}
+                    onChange={(e) => setLocationInput(e.target.value)}
+                    className="sm:w-48"
+                />
+                 <Button 
+                    variant="outline" 
+                    onClick={() => handleSearch(searchTopics[0], locationInput)}
+                    disabled={isSearching || !locationInput}
+                >
+                    <MapPin className="mr-2 h-4 w-4" /> Find Local
+                </Button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
                 {searchTopics.map(topic => (
-                    <Button key={topic} variant="outline" size="sm" onClick={() => handleSearch(topic)} disabled={isSearching}>
-                         {isSearching && currentTopic === topic ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button 
+                        key={topic} 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleSearch(topic, locationInput)} 
+                        disabled={isSearching}
+                    >
+                         {isSearching && currentSearch?.topic === topic && currentSearch?.location === locationInput.trim() ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         {topic}
                     </Button>
                 ))}
@@ -117,7 +155,7 @@ export default function EventsCatalogue({ showFooter = true }: { showFooter?: bo
         {isSearching && (
             <div className="w-full text-center text-muted-foreground flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Finding events for "{currentTopic}"...</span>
+                <span>Finding events...</span>
             </div>
         )}
 
@@ -130,7 +168,7 @@ export default function EventsCatalogue({ showFooter = true }: { showFooter?: bo
         
         {discoveredEvents.length > 0 && !isSearching && (
              <div className="w-full space-y-4">
-                <h4 className="font-semibold">Discovered Events for "{currentTopic}"</h4>
+                {renderSearchHeader()}
                  <ul className="space-y-4">
                   {discoveredEvents.map(event => (
                     <li key={event.title} className="flex flex-col sm:flex-row gap-4 items-start">
