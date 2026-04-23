@@ -196,24 +196,6 @@
         "imageHint"
       ]
     },
-    "Challenge": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Challenge",
-      "type": "object",
-      "description": "An official or community-created challenge.",
-      "properties": {
-        "title": { "type": "string", "description": "The title of the challenge." },
-        "description": { "type": "string", "description": "A detailed description of the challenge." },
-        "type": { "type": "string", "enum": ["official", "community"], "description": "The type of challenge." },
-        "badge": { "type": "string", "description": "A descriptive badge for the challenge (e.g., 'Long-Term')." },
-        "progress": { "type": "number", "description": "The completion progress, typically for official challenges (0-100)." },
-        "participants": { "type": "number", "description": "The number of users participating in the challenge." },
-        "creatorId": { "type": "string", "description": "The UID of the user who created the challenge (for community challenges)." },
-        "creatorName": { "type": "string", "description": "The display name of the user who created the challenge." },
-        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the challenge was created." }
-      },
-      "required": ["title", "description", "type", "participants", "createdAt"]
-    },
     "UserEvent": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserEvent",
@@ -273,12 +255,6 @@
         "$ref": "#/entities/Snap"
       },
       "description": "A collection of all snaps shared by the community. The document ID is auto-generated."
-    },
-    "/challenges/{challengeId}": {
-      "schema": {
-        "$ref": "#/entities/Challenge"
-      },
-      "description": "A collection of all challenges, both official and community-created."
     }
   }
 }

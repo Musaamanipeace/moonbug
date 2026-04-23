@@ -20,7 +20,6 @@ import {
   Calendar,
   Sparkles,
   Camera,
-  Swords,
   BookOpen,
   User,
   PanelLeft,
@@ -38,7 +37,6 @@ const navItems = [
   { href: '/calendar', label: 'Calendar', icon: Calendar },
   { href: '/history', label: 'History', icon: History },
   { href: '/snaps', label: 'Snaps', icon: Camera },
-  { href: '/challenges', label: 'Challenges', icon: Swords },
   { href: '/posts', label: 'Posts', icon: BookOpen },
 ];
 
