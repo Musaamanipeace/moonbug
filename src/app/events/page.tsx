@@ -188,7 +188,15 @@ export default function EventsPage() {
   const { formState: { isSubmitting } } = form;
 
   const onEventSubmit = (values: z.infer<typeof eventFormSchema>) => {
-    if (!user || !eventsCollectionRef) return;
+    if (!user || !eventsCollectionRef) {
+      toast({
+        variant: "destructive",
+        title: "Sign In Required",
+        description: "You must be signed in to save an event. Please go to the Profile page to sign in or create an account.",
+      });
+      setIsDialogOpen(false); // Close the dialog
+      return;
+    }
     addDocumentNonBlocking(eventsCollectionRef, {
       ...values,
       authorId: user.uid,
@@ -247,49 +255,47 @@ export default function EventsPage() {
             <h1 className="font-headline text-3xl md:text-4xl font-bold tracking-tighter">Events</h1>
             <p className="text-muted-foreground mt-1">Explore global happenings and manage your personal events.</p>
           </div>
-          {user && (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button><PlusCircle />Create Event</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create a New Event</DialogTitle>
-                  <DialogDescription>Add a personal event to your collection.</DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onEventSubmit)} className="space-y-4">
-                    <FormField control={form.control} name="title" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl><Input placeholder="e.g., Doctor's Appointment" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="location" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location (Optional)</FormLabel>
-                        <FormControl><Input placeholder="e.g., 123 Cosmic Lane or Online" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="date" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date (Optional)</FormLabel>
-                        <FormControl><Input type="date" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <DialogFooter>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="animate-spin" />} Save Event
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          )}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button><PlusCircle />Create Event</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create a New Event</DialogTitle>
+                <DialogDescription>Add a personal event to your collection.</DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onEventSubmit)} className="space-y-4">
+                  <FormField control={form.control} name="title" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl><Input placeholder="e.g., Doctor's Appointment" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="location" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location (Optional)</FormLabel>
+                      <FormControl><Input placeholder="e.g., 123 Cosmic Lane or Online" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="date" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date (Optional)</FormLabel>
+                      <FormControl><Input type="date" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <DialogFooter>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="animate-spin" />} Save Event
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
         <Tabs defaultValue="my-events" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
