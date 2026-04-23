@@ -19,7 +19,8 @@ service cloud.firestore {
       }
 
       match /events/{eventId} {
-        allow read, write: if isOwner(userId);
+        allow get, list: if isOwner(userId);
+        allow create, update, delete: if isOwner(userId);
       }
     }
 
