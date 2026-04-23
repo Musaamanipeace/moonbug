@@ -17,15 +17,15 @@
         "birthDate"
       ]
     },
-    "StickyNote": {
+    "Reminder": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "StickyNote",
+      "title": "Reminder",
       "type": "object",
-      "description": "Stores a user's single, persistent sticky note.",
+      "description": "Stores a user's single, persistent reminder note.",
       "properties": {
         "content": {
           "type": "string",
-          "description": "The main text content of the sticky note."
+          "description": "The main text content of the reminder."
         },
         "updatedAt": {
           "type": "string",
@@ -227,11 +227,11 @@
       },
       "description": "Stores individual user profiles. The document ID (`{userId}`) matches the Firebase Authentication UID."
     },
-    "/users/{userId}/sticky_notes/{noteId}": {
+    "/users/{userId}/reminders/{reminderId}": {
       "schema": {
-        "$ref": "#/entities/StickyNote"
+        "$ref": "#/entities/Reminder"
       },
-      "description": "A subcollection for a user's notes. For now, we only use a single document with the ID 'main'."
+      "description": "A subcollection for a user's reminders. For now, we only use a single document with the ID 'main'."
     },
     "/users/{userId}/events/{eventId}": {
       "schema": {

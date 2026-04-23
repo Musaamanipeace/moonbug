@@ -41,7 +41,7 @@ import { format, parseISO, isFuture } from 'date-fns';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-interface StickyNoteData {
+interface ReminderData {
   content: string;
   updatedAt?: any;
   notificationTime?: string;
@@ -63,10 +63,10 @@ const voices = [
 
 const DEBOUNCE_DELAY = 1000;
 
-export default function StickyNote() {
+export default function Reminder() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const [localNote, setLocalNote] = useState('');
+  const [localContent, setLocalContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const { toast } = useToast();
@@ -75,12 +75,12 @@ export default function StickyNote() {
   const [isNotificationPlaying, setIsNotificationPlaying] = useState(false);
   const alarmTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const stickyNoteRef = useMemoFirebase(() => {
+  const reminderRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return doc(firestore, `users/${user.uid}/sticky_notes/main`);
+    return doc(firestore, `users/${user.uid}/reminders/main`);
   }, [user, firestore]);
 
-  const { data: remoteNote, isLoading: isNoteLoading } = useDoc<StickyNoteData>(stickyNoteRef);
+  const { data: remoteReminder, isLoading: isReminderLoading } = useDoc<ReminderData>(reminderRef);
 
   const form = useForm<z.infer<typeof notificationFormSchema>>({
     resolver: zodResolver(notificationFormSchema),
@@ -109,7 +109,7 @@ export default function StickyNote() {
         setIsNotificationPlaying(true);
         toast({
           title: 'Moonbug Reminder!',
-          description: 'Playing your note reminder audio.',
+          description: 'Playing your reminder audio.',
           duration: 10000,
         });
         
@@ -132,13 +132,13 @@ export default function StickyNote() {
           setIsNotificationPlaying(false);
         }
 
-        if (stickyNoteRef) {
-          updateDoc(stickyNoteRef, {
+        if (reminderRef) {
+          updateDoc(reminderRef, {
             notificationTime: null,
             notificationVoice: null,
           }).catch(error => {
               errorEmitter.emit('permission-error', new FirestorePermissionError({
-                  path: stickyNoteRef.path,
+                  path: reminderRef.path,
                   operation: 'update',
                   requestResourceData: { notificationTime: null, notificationVoice: null }
               }))
@@ -146,28 +146,28 @@ export default function StickyNote() {
         }
       }, timeoutDuration);
     }
-  }, [stickyNoteRef, toast]);
+  }, [reminderRef, toast]);
   
   useEffect(() => {
-    if (remoteNote?.notificationTime && isFuture(parseISO(remoteNote.notificationTime)) && remoteNote.content) {
-      scheduleAlarm(remoteNote.notificationTime, remoteNote.notificationVoice || 'Algenib', remoteNote.content);
+    if (remoteReminder?.notificationTime && isFuture(parseISO(remoteReminder.notificationTime)) && remoteReminder.content) {
+      scheduleAlarm(remoteReminder.notificationTime, remoteReminder.notificationVoice || 'Algenib', remoteReminder.content);
     }
-  }, [remoteNote?.notificationTime, remoteNote?.content, remoteNote?.notificationVoice, scheduleAlarm]);
+  }, [remoteReminder?.notificationTime, remoteReminder?.content, remoteReminder?.notificationVoice, scheduleAlarm]);
 
   useEffect(() => {
-    if (remoteNote && remoteNote.content !== localNote) {
-      setLocalNote(remoteNote.content);
+    if (remoteReminder && remoteReminder.content !== localContent) {
+      setLocalContent(remoteReminder.content);
     }
-  }, [remoteNote]);
+  }, [remoteReminder]);
   
   useEffect(() => {
-    if (!stickyNoteRef || localNote === (remoteNote?.content || '')) {
+    if (!reminderRef || localContent === (remoteReminder?.content || '')) {
       return;
     }
 
     setIsSaving(true);
     const handler = setTimeout(() => {
-      setDocumentNonBlocking(stickyNoteRef, { content: localNote, updatedAt: serverTimestamp() }, { merge: true });
+      setDocumentNonBlocking(reminderRef, { content: localContent, updatedAt: serverTimestamp() }, { merge: true });
       setIsSaving(false);
       setLastSaved(new Date());
     }, DEBOUNCE_DELAY);
@@ -175,24 +175,24 @@ export default function StickyNote() {
     return () => {
       clearTimeout(handler);
     };
-  }, [localNote, remoteNote, stickyNoteRef]);
+  }, [localContent, remoteReminder, reminderRef]);
 
-  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setLocalNote(e.target.value);
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalContent(e.target.value);
   };
 
   const handleSetNotification = (values: z.infer<typeof notificationFormSchema>) => {
-    if (!stickyNoteRef) return;
+    if (!reminderRef) return;
     
     const notificationData = {
       notificationTime: new Date(values.notificationTime).toISOString(),
       notificationVoice: values.notificationVoice,
     };
 
-    setDocumentNonBlocking(stickyNoteRef, notificationData, { merge: true });
+    setDocumentNonBlocking(reminderRef, notificationData, { merge: true });
     
-    if (localNote) {
-        scheduleAlarm(notificationData.notificationTime, notificationData.notificationVoice, localNote);
+    if (localContent) {
+        scheduleAlarm(notificationData.notificationTime, notificationData.notificationVoice, localContent);
     }
     
     toast({
@@ -206,13 +206,13 @@ export default function StickyNote() {
   
   const handleCancelNotification = () => {
     if (alarmTimeout.current) clearTimeout(alarmTimeout.current);
-    if (stickyNoteRef) {
-      updateDoc(stickyNoteRef, {
+    if (reminderRef) {
+      updateDoc(reminderRef, {
         notificationTime: null,
         notificationVoice: null,
       }).catch(error => {
           errorEmitter.emit('permission-error', new FirestorePermissionError({
-              path: stickyNoteRef.path,
+              path: reminderRef.path,
               operation: 'update',
               requestResourceData: { notificationTime: null, notificationVoice: null }
           }))
@@ -231,18 +231,18 @@ export default function StickyNote() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-accent">
             <Pin />
-            Sticky Note
+            Reminder
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center text-center">
             <WifiOff className="w-10 h-10 text-accent/50 mb-2"/>
-            <p className="text-sm text-accent/80">Sign in to sync your notes across devices.</p>
+            <p className="text-sm text-accent/80">Sign in to sync your reminders across devices.</p>
         </CardContent>
       </Card>
     );
   }
 
-  const hasActiveNotification = remoteNote?.notificationTime && isFuture(parseISO(remoteNote.notificationTime));
+  const hasActiveNotification = remoteReminder?.notificationTime && isFuture(parseISO(remoteReminder.notificationTime));
 
   return (
     <Card className="glass-card bg-accent/10 border-accent/50">
@@ -251,10 +251,10 @@ export default function StickyNote() {
             <div className="flex-1">
                 <CardTitle className="flex items-center gap-2 text-accent">
                     <Pin />
-                    Sticky Note
+                    Reminder
                 </CardTitle>
                 <CardDescription className="text-accent/80 h-4">
-                     {isSaving ? 'Saving...' : (lastSaved && remoteNote?.updatedAt) ? `Saved` : 'Your thoughts, synced to the cloud.'}
+                     {isSaving ? 'Saving...' : (lastSaved && remoteReminder?.updatedAt) ? `Saved` : 'Your thoughts, synced to the cloud.'}
                 </CardDescription>
             </div>
             <Dialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
@@ -294,7 +294,7 @@ export default function StickyNote() {
                                 </FormItem>
                             )} />
                              <DialogFooter>
-                                <Button type="submit" disabled={!localNote}>Set Notification</Button>
+                                <Button type="submit" disabled={!localContent}>Set Notification</Button>
                             </DialogFooter>
                         </form>
                     </Form>
@@ -305,9 +305,9 @@ export default function StickyNote() {
       <CardContent>
         <Textarea
           placeholder="Jot down a cosmic thought..."
-          value={localNote}
-          onChange={handleNoteChange}
-          disabled={isNoteLoading}
+          value={localContent}
+          onChange={handleContentChange}
+          disabled={isReminderLoading}
           className="h-32 bg-transparent border-accent/50 focus:bg-background/50 text-foreground placeholder:text-accent/60 resize-none font-code"
         />
       </CardContent>
@@ -315,7 +315,7 @@ export default function StickyNote() {
           <CardFooter className="flex justify-between items-center bg-accent/10 p-3">
               <div className="flex items-center gap-2 text-xs text-accent">
                   <AlarmClock className="h-4 w-4" />
-                  <span>Reminder set for {format(parseISO(remoteNote.notificationTime!), 'h:mm a')}</span>
+                  <span>Reminder set for {format(parseISO(remoteReminder.notificationTime!), 'h:mm a')}</span>
               </div>
               <Button variant="ghost" size="icon" className="h-6 w-6 text-accent" onClick={handleCancelNotification}>
                   <XIcon className="h-4 w-4" />

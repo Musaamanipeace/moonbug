@@ -14,7 +14,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow get, write: if isOwner(userId);
       
-      match /sticky_notes/{noteId} {
+      match /reminders/{reminderId} {
          allow read, write: if isOwner(userId);
       }
 
