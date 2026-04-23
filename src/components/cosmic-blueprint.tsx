@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -6,14 +5,16 @@ import { useUser, useFirestore, useDoc, setDocumentNonBlocking, useMemoFirebase 
 import { doc } from 'firebase/firestore';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { countNewMoonsSince, getLunarDate, getMoonPhase, MOON_PHASES } from '@/lib/moon-utils';
+import { countNewMoonsSince, getLunarDate, getMoonPhase } from '@/lib/moon-utils';
 import MoonPhaseIcon from '@/components/moon-phase-icon';
-import { parse, isValid, isBefore, isAfter, format } from 'date-fns';
-import { Loader2, User, Pencil } from 'lucide-react';
+import { parse, isValid, format } from 'date-fns';
+import { Loader2, User, Pencil, Calendar as CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 interface UserProfile {
-    birthDate?: string;
+    birthDate?: string; // YYYY-MM-DD
 }
 
 export default function CosmicBlueprint() {
@@ -28,21 +29,18 @@ export default function CosmicBlueprint() {
     const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userProfileRef);
 
     const [isEditing, setIsEditing] = useState(false);
-    const [year, setYear] = useState('');
-    const [month, setMonth] = useState('');
-    const [day, setDay] = useState('');
-    const [parsedBirthDate, setParsedBirthDate] = useState<Date | undefined>();
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>();
     const [isSaving, setIsSaving] = useState(false);
     const [now, setNow] = useState<Date | null>(null);
 
     useEffect(() => {
-        // This ensures the `new Date()` is only called on the client-side
         setNow(new Date());
     }, []);
 
     const birthDate = useMemo(() => {
         if (!userProfile?.birthDate) return null;
-        return parse(userProfile.birthDate, 'yyyy-MM-dd', new Date());
+        const parsed = parse(userProfile.birthDate, 'yyyy-MM-dd', new Date());
+        return isValid(parsed) ? parsed : null;
     }, [userProfile]);
 
     const lunarData = useMemo(() => {
@@ -57,48 +55,28 @@ export default function CosmicBlueprint() {
         };
     }, [birthDate, now]);
 
-    // Effect to set initial editing state and pre-fill inputs
+    // Effect to set initial editing state and pre-fill date picker
     useEffect(() => {
         if (!isProfileLoading && !userProfile?.birthDate) {
             setIsEditing(true);
         }
-        if (userProfile?.birthDate) {
-            const d = parse(userProfile.birthDate, 'yyyy-MM-dd', new Date());
-            if (isValid(d)) {
-                setYear(format(d, 'yyyy'));
-                setMonth(format(d, 'MM'));
-                setDay(format(d, 'dd'));
-            }
-        }
-    }, [isProfileLoading, userProfile]);
-
-
-    // Effect for date input parsing
-    useEffect(() => {
-        const dateString = `${year}-${month}-${day}`;
-        if (year.length === 4 && month.length >= 1 && day.length >= 1) {
-            const parsed = parse(dateString, 'yyyy-MM-dd', new Date());
-            if (isValid(parsed) && isBefore(parsed, new Date()) && isAfter(parsed, new Date("1900-01-01"))) {
-                setParsedBirthDate(parsed);
-            } else {
-                setParsedBirthDate(undefined);
-            }
+        if (birthDate) {
+            setSelectedDate(birthDate);
         } else {
-            setParsedBirthDate(undefined);
+            setSelectedDate(undefined);
         }
-    }, [year, month, day]);
+    }, [isProfileLoading, userProfile, birthDate]);
     
     const handleSaveBirthDate = () => {
-        if (!userProfileRef || !parsedBirthDate) return;
+        if (!userProfileRef || !selectedDate) return;
         
         setIsSaving(true);
-        const dateToSave = format(parsedBirthDate, 'yyyy-MM-dd');
+        const dateToSave = format(selectedDate, 'yyyy-MM-dd');
 
-        // Use a non-blocking write to Firestore
         setDocumentNonBlocking(userProfileRef, { birthDate: dateToSave }, { merge: true });
 
         setIsEditing(false);
-        // Optimistically update, but Firestore listener will handle the real state
+        // Optimistically update, Firestore listener will handle the real state
         setTimeout(() => setIsSaving(false), 1000);
     };
 
@@ -173,16 +151,37 @@ export default function CosmicBlueprint() {
             </CardHeader>
             <CardContent>
                  <div className="space-y-4">
-                    <div className="flex gap-2 w-full">
-                        <Input type="text" placeholder="YYYY" value={year} onChange={(e) => setYear(e.target.value)} className="w-24" maxLength={4} disabled={isSaving}/>
-                        <Input type="text" placeholder="MM" value={month} onChange={(e) => setMonth(e.target.value)} className="w-16" maxLength={2} disabled={isSaving}/>
-                        <Input type="text" placeholder="DD" value={day} onChange={(e) => setDay(e.target.value)} className="w-16" maxLength={2} disabled={isSaving}/>
-                    </div>
-                     {!parsedBirthDate && (year.length > 0 || month.length > 0 || day.length > 0) && (
-                        <p className="text-destructive text-sm">Please enter a valid past date.</p>
-                    )}
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "w-full sm:w-[280px] justify-start text-left font-normal",
+                                    !selectedDate && "text-muted-foreground"
+                                )}
+                                disabled={isSaving}
+                            >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {selectedDate ? format(selectedDate, "PPP") : <span>Pick a birth date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={setSelectedDate}
+                                disabled={(date) =>
+                                    date > new Date() || date < new Date("1900-01-01")
+                                }
+                                captionLayout="dropdown-buttons"
+                                fromYear={1900}
+                                toYear={new Date().getFullYear()}
+                            />
+                        </PopoverContent>
+                    </Popover>
+
                     <div className="flex gap-2">
-                        <Button onClick={handleSaveBirthDate} disabled={!parsedBirthDate || isSaving} className="w-full sm:w-auto">
+                        <Button onClick={handleSaveBirthDate} disabled={!selectedDate || isSaving} className="w-full sm:w-auto">
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Save
                         </Button>
