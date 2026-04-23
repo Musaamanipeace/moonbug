@@ -6,7 +6,7 @@ import EventsCatalogue from '@/components/events-catalogue';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { collection, query, orderBy, serverTimestamp, Timestamp, doc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Calendar, MapPin, Bell, Trash2, XIcon, AlarmClock } from 'lucide-react';
+import { PlusCircle, Loader2, Calendar, MapPin, Bell, Trash2, XIcon, AlarmClock, Star } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
@@ -44,6 +44,7 @@ type UserEvent = {
   createdAt: Timestamp;
   notificationTime?: string;
   notificationVoice?: string;
+  highlighted?: boolean;
 };
 
 const eventFormSchema = z.object({
@@ -87,50 +88,61 @@ function UserEventCard({ event, onDelete, onSetNotification }: { event: UserEven
     form.reset();
   };
 
+  const handleToggleHighlight = () => {
+    if (!firestore) return;
+    const eventRef = doc(firestore, `users/${event.authorId}/events/${event.id}`);
+    setDocumentNonBlocking(eventRef, { highlighted: !event.highlighted }, { merge: true });
+  };
+
   return (
-    <Card className="glass-card">
+    <Card className="glass-card flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle>{event.title}</CardTitle>
-          <Dialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon"><Bell className="h-5 w-5" /></Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Set Reminder for "{event.title}"</DialogTitle>
-                <DialogDescription>Get a timed audio reminder for this event.</DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitNotification)} className="space-y-4">
-                  <FormField control={form.control} name="notificationTime" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reminder Time</FormLabel>
-                      <FormControl><Input type="datetime-local" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="notificationVoice" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reminder Voice</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger><SelectValue placeholder="Select a voice" /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>{voices.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <DialogFooter><Button type="submit">Set Notification</Button></DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={handleToggleHighlight}>
+              <Star className={cn("h-5 w-5", event.highlighted ? "text-primary fill-primary" : "text-muted-foreground")} />
+            </Button>
+            <Dialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon"><Bell className="h-5 w-5" /></Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Set Reminder for "{event.title}"</DialogTitle>
+                  <DialogDescription>Get a timed audio reminder for this event.</DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmitNotification)} className="space-y-4">
+                    <FormField control={form.control} name="notificationTime" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reminder Time</FormLabel>
+                        <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="notificationVoice" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reminder Voice</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger><SelectValue placeholder="Select a voice" /></SelectTrigger>
+                          </FormControl>
+                          <SelectContent>{voices.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <DialogFooter><Button type="submit">Set Notification</Button></DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         {event.createdAt && <CardDescription>Created {formatDistanceToNow(event.createdAt.toDate(), { addSuffix: true })}</CardDescription>}
       </CardHeader>
-      <CardContent className="space-y-2 text-sm">
+      <CardContent className="space-y-2 text-sm flex-grow">
         {event.date && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Calendar className="h-4 w-4" />
@@ -201,6 +213,7 @@ export default function EventsPage() {
       ...values,
       authorId: user.uid,
       createdAt: serverTimestamp(),
+      highlighted: false,
     });
     toast({ title: 'Event Created!', description: 'Your new event has been saved.' });
     form.reset();

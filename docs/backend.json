@@ -208,7 +208,8 @@
         "authorId": { "type": "string", "description": "The UID of the user who created the event." },
         "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of when the event was created." },
         "notificationTime": { "type": "string", "format": "date-time", "description": "Optional scheduled ISO 8601 time for a notification." },
-        "notificationVoice": { "type": "string", "enum": ["Algenib", "Achernar", "Enif"], "description": "The optional identifier for the notification voice." }
+        "notificationVoice": { "type": "string", "enum": ["Algenib", "Achernar", "Enif"], "description": "The optional identifier for the notification voice." },
+        "highlighted": { "type": "boolean", "description": "Indicates if the user has highlighted this event." }
       },
       "required": ["title", "authorId", "createdAt"]
     }
